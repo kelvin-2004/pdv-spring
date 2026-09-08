@@ -1,0 +1,22 @@
+  ┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
+  │   tb_clientes   │       │   tb_pedidos    │       │   tb_entregas   │
+  ├─────────────────┤       ├─────────────────┤       ├─────────────────┤
+  │ id (PK)         │1     N│ id (PK)         │1     1│ id (PK)         │
+  │ nome            ├───────┤ cliente_id (FK) ├───────┤ pedido_id (FK)  │
+  │ telefone        │       │ origem          │       │ endereco_rua    │
+  │ cpf_cnpj        │       │ status          │       │ numero          │
+  └─────────────────┘       │ valor_total     │       │ bairro          │
+                            │ data_criacao    │       │ taxa_entrega    │
+                            └────────┬────────┘       └─────────────────┘
+                                     │1
+                                     │
+                                     │N
+                            ┌────────┴────────┐       ┌─────────────────┐
+                            │tb_itens_pedido  │       │  tb_produtos    │
+                            ├─────────────────┤       ├─────────────────┤
+                            │ id (PK)         │N     1│ id (PK)         │
+                            │ pedido_id (FK)  ├───────┤ produto_id (FK) │
+                            │ quantidade      │       │ nome            │
+                            │ preco_unitario  │       │ preco_base      │
+                            │ observacao      │       │ codigo_sku      │
+                            └─────────────────┘       └─────────────────┘
