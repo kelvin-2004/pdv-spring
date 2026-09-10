@@ -24,33 +24,43 @@ public class itensPedidoService {
     @Autowired
     private produtoRepository produtoRepo;
 
-    // Adiciona um produto ao pedido e calcula o subtotal
+    // Adiciona um produto ao pedido, calcula o subtotal e atualiza o valor total do pedido
     public itensPedido adicionarItem(Long pedidoId, Long produtoId, Integer quantidade, String observacao) {
 
-        // 1. Valida se o pedido existe
+        // 1. Valida e busca o pedido
         pedido p = pedidoRepo.findById(pedidoId)
                 .orElseThrow(() -> new RuntimeException("Pedido não encontrado com o ID: " + pedidoId));
 
-        // 2. Valida se o produto existe
+        // 2. Valida e busca o produto
         produtos prod = produtoRepo.findById(produtoId)
                 .orElseThrow(() -> new RuntimeException("Produto não encontrado com o ID: " + produtoId));
 
-        // 3. Cria e popula a instância do item
+        // 3. Instancia e popula o item do pedido
         itensPedido item = new itensPedido();
         item.setPedidos(p);
         item.setProduto(prod);
         item.setQuantidade(quantidade);
         item.setObservacao(observacao);
 
-        // 4. Captura o preço atual e calcula o subtotal (Preço x Quantidade)
-        BigDecimal precoUnitario = prod.getPreco(); // Se o preço no produto for Double, use BigDecimal.valueOf(prod.getPreco())
-        item.setPrecoUnitario(precoUnitario);
-        item.setSubtotal(precoUnitario.multiply(BigDecimal.valueOf(quantidade)));
+        // 4. Calcula o subtotal do item
+        BigDecimal precoUnitario = prod.getPreco();
+        BigDecimal subtotal = precoUnitario.multiply(BigDecimal.valueOf(quantidade));
 
-        return itensPedidoRepo.save(item);
+        item.setPrecoUnitario(precoUnitario);
+        item.setSubtotal(subtotal);
+
+        // 5. Persiste o item primeiro
+        itensPedido itemSalvo = itensPedidoRepo.save(item);
+
+        // 6. Atualiza o valorTotal do pedido acumulando o novo subtotal
+        BigDecimal valorTotalAtual = p.getValorTotal() != null ? p.getValorTotal() : BigDecimal.ZERO;
+        p.setValorTotal(valorTotalAtual.add(subtotal));
+        pedidoRepo.save(p);
+
+        return itemSalvo;
     }
 
-    // Busca todos os itens cadastrados em um pedido
+    // Busca todos os itens de um pedido
     public List<itensPedido> listarPorPedido(Long pedidoId) {
         return itensPedidoRepo.findByPedidosId(pedidoId);
     }

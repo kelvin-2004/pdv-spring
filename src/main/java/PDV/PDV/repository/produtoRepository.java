@@ -5,12 +5,19 @@ import PDV.PDV.model.produtos;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface produtoRepository extends JpaRepository<produtos, Long> {
 
-    // 1. Busca todos os produtos ativos (sem parâmetro)
+    // Busca todos os produtos ativos
     List<produtos> findByAtivoTrue();
 
-    // 2. Busca produtos ativos filtrados por uma categoria específica
+    // Busca exata por nome
+    Optional<produtos> findByNome(String nome);
+
+    // Busca por parte do nome (ignorando maiúsculas/minúsculas)
+    List<produtos> findByNomeContainingIgnoreCase(String nome);
+
+    // Busca produtos ativos por categoria
     List<produtos> findByCategoriaPedidoAndAtivoTrue(categoriaPedido categoria);
 }

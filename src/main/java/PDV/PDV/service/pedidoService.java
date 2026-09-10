@@ -1,6 +1,7 @@
 package PDV.PDV.service;
 
 import PDV.PDV.model.Enum.statusPedido;
+import PDV.PDV.model.clientes;
 import PDV.PDV.model.pedido;
 import PDV.PDV.repository.pedidoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,4 +40,7 @@ public List<pedido> listarStatus(statusPedido status){
 }
 public Optional<pedido> procurarID(Long id){
         return pedidoRepo.findById(id);
-}}
+}
+    public List<pedido> listarTodos(){
+        return pedidoRepo.findAll();
+    }}

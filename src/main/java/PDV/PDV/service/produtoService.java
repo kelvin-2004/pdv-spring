@@ -20,22 +20,32 @@ public class produtoService {
         return produtoRepo.save(produto);
     }
 
-    // 2. Listar apenas os produtos ativos (sem parâmetros)
+    // 2. Listar TODOS os produtos (ativos e inativos)
+    public List<produtos> listarTodos() {
+        return produtoRepo.findAll();
+    }
+
+    // 3. Listar apenas os produtos ativos
     public List<produtos> listarAtivos() {
         return produtoRepo.findByAtivoTrue();
     }
 
-    // 3. Filtrar produtos por categoria e que estejam ativos
+    // 4. Filtrar produtos por categoria e ativos
     public List<produtos> listarPorCategoria(categoriaPedido categoria) {
         return produtoRepo.findByCategoriaPedidoAndAtivoTrue(categoria);
     }
 
-    // 4. Buscar produto por ID
+    // 5. Buscar produto por ID
     public Optional<produtos> buscarPorId(Long id) {
         return produtoRepo.findById(id);
     }
 
-    // 5. Ativar ou desativar produto (pausar vendas sem deletar do banco)
+    // 6. Buscar produtos por parte do nome
+    public List<produtos> buscarPorNome(String nome) {
+        return produtoRepo.findByNomeContainingIgnoreCase(nome);
+    }
+
+    // 7. Ativar ou desativar produto
     public produtos alterarStatusAtivo(Long id, boolean status) {
         Optional<produtos> produtoOptional = produtoRepo.findById(id);
 

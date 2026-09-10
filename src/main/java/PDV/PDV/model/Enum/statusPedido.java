@@ -4,5 +4,6 @@ public enum statusPedido {
     PREPARANDO,
     AGUARDANDO_ENTREGADOR,
     A_CAMINHO,
+    CONCLUIDO,
     CANCELADO
 }
