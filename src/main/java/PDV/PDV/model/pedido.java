@@ -10,6 +10,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Data
 @Entity
@@ -20,32 +21,50 @@ public class pedido {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Conecta com o Cliente
+    @Column(name = "numero_pedido_cliente")
+    private Integer numeroPedidoCliente;
+
     @ManyToOne
     @JoinColumn(name = "cliente_id")
     private clientes cliente;
 
-    // Mapeamento bidirecional: a FK "pedido_id" ficará na tabela tb_entregas
     @OneToOne(mappedBy = "pedido", cascade = CascadeType.ALL)
     private entregas entregas;
 
-    @Enumerated(EnumType.STRING)
-    private tipoPedido tipoPedido; // retirada ou delivery
+    @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<itensPedido> itens;
 
     @Enumerated(EnumType.STRING)
-    private tipoLogistico tipoLogistica; // própria ou parceira
+    private tipoPedido tipoPedido;
 
     @Enumerated(EnumType.STRING)
-    private statusPedido statusPedido; // preparando, despachado, cancelado
+    private tipoLogistico tipoLogistica;
 
     @Enumerated(EnumType.STRING)
-    private origemPedido origemPedido; // WhatsApp, iFood, etc.
+    private statusPedido statusPedido;
+
+    @Enumerated(EnumType.STRING)
+    private origemPedido origemPedido;
 
     @Enumerated(EnumType.STRING)
     private formaPagamento formaPagamento;
+
 
     private BigDecimal valorTotal;
 
     @Column(name = "data_hora_pedido", nullable = false, updatable = false)
     private OffsetDateTime dataHoraPedido = OffsetDateTime.now();
+
+    private BigDecimal taxaEntrega;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal trocoPara;
+
+    public BigDecimal getTrocoPara() {
+        return trocoPara;
+    }
+
+    public void setTrocoPara(BigDecimal trocoPara) {
+        this.trocoPara = trocoPara;
+    }
 }

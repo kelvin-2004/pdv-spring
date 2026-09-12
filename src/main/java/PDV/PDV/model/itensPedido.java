@@ -12,9 +12,11 @@ public class itensPedido {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @ManyToOne
     @JoinColumn(name = "pedidos_id")
-    private pedido Pedidos;
+    private pedido pedido;
+
     @ManyToOne
     @JoinColumn(name = "produto_id")
     private produtos produto;
@@ -23,7 +25,4 @@ public class itensPedido {
     private BigDecimal precoUnitario;
     private BigDecimal subtotal;
     private String observacao;
-
-
-
 }

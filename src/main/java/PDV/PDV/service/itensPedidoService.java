@@ -37,7 +37,7 @@ public class itensPedidoService {
 
         // 3. Instancia e popula o item do pedido
         itensPedido item = new itensPedido();
-        item.setPedidos(p);
+        item.setPedido(p);
         item.setProduto(prod);
         item.setQuantidade(quantidade);
         item.setObservacao(observacao);
@@ -62,6 +62,5 @@ public class itensPedidoService {
 
     // Busca todos os itens de um pedido
     public List<itensPedido> listarPorPedido(Long pedidoId) {
-        return itensPedidoRepo.findByPedidosId(pedidoId);
-    }
-}
+        return itensPedidoRepo.findByPedidoId(pedidoId);
+    }}

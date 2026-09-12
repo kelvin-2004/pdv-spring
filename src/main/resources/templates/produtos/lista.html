@@ -38,10 +38,13 @@
             color: var(--cor-secundaria) !important;
         }
 
+        /* LOGO ARREDONDADA */
         .logo-header {
             height: 45px;
-            width: auto;
-            object-fit: contain;
+            width: 45px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid var(--cor-secundaria);
         }
 
         .card-custom {
@@ -171,17 +174,17 @@
                     <a class="nav-link" th:href="@{/clientes}"><i class="fa-solid fa-users me-1"></i> Clientes</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white-50" href="#" onclick="alert('Tela em desenvolvimento nas próximas etapas!')"><i class="fa-solid fa-chart-line me-1"></i> Dashboard</a>
+                    <a class="nav-link" th:href="@{/admin/dashboard}"><i class="fa-solid fa-chart-line me-1"></i> Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white-50" href="#" onclick="alert('Tela em desenvolvimento nas próximas etapas!')"><i class="fa-solid fa-filter me-1"></i> Pedidos</a>
+                    <a class="nav-link" th:href="@{/pedidos/gerenciar}"><i class="fa-solid fa-filter me-1"></i> Pedidos</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white-50" href="#" onclick="alert('Tela em desenvolvimento nas próximas etapas!')"><i class="fa-solid fa-motorcycle me-1"></i> Entregas</a>
+                    <a class="nav-link" th:href="@{/pedidos/entregas}"><i class="fa-solid fa-motorcycle me-1"></i> Entregas</a>
                 </li>
             </ul>
 
-            <!-- BOTÕES DE ACESSO RÁPIDO (GERENCIAR PEDIDOS + NOVO PEDIDO PDV) -->
+            <!-- BOTÕES DE ACESSO RÁPIDO -->
             <div class="d-flex align-items-center gap-2">
                 <a class="btn btn-gerenciar-custom d-flex align-items-center gap-2 shadow-sm" th:href="@{/pedidos/gerenciar}">
                     <i class="fa-solid fa-list-check"></i> Gerenciar Pedidos
@@ -411,7 +414,7 @@
         }
     });
 
-    btnRemovePhoto.addEventListener('click', function`()` {
+    btnRemovePhoto.addEventListener('click', function() {
         inputFile.value = '';
         imgPreview.src = defaultImg;
         btnRemovePhoto.classList.add('d-none');

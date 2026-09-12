@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marmitas Sousa | Caixa / PDV</title>
+    <title>Marmitas Sousa | Novo Pedido - Dados do Cliente</title>
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%2363452C' d='M256 32c125.7 0 228 102.3 228 228s-102.3 228-228 228S28 385.7 28 260 130.3 32 256 32zm0 64c-92.8 0-164 71.2-164 164s71.2 164 164 164 164-71.2 164-164-71.2-164-164-164z'/%3E%3Cpath fill='%23F6D32D' d='M176 220h160v64H176z'/%3E%3C/svg%3E">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -25,15 +28,21 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
-        .navbar-custom .navbar-brand {
+        .navbar-custom .navbar-brand, .navbar-custom .nav-link {
             color: #ffffff;
             font-weight: 500;
         }
 
+        .navbar-custom .nav-link:hover, .navbar-custom .nav-link.active {
+            color: var(--cor-secundaria) !important;
+        }
+
         .logo-header {
             height: 45px;
-            width: auto;
-            object-fit: contain;
+            width: 45px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid var(--cor-secundaria);
         }
 
         .card-custom {
@@ -52,8 +61,8 @@
         }
 
         .btn-marmita {
-            background-color: var(--cor-secundaria);
-            color: var(--cor-primaria);
+            background-color: var(--cor-secundaria) !important;
+            color: var(--cor-primaria) !important;
             font-weight: 700;
             border: none;
             padding: 0.6rem 1.2rem;
@@ -61,13 +70,13 @@
             transition: all 0.3s ease;
         }
 
-        .btn-marmita:hover {
-            background-color: #e0be23;
-            color: var(--cor-primaria);
+        .btn-marmita:hover, .btn-marmita.active {
+            background-color: #e0be23 !important;
+            color: var(--cor-primaria) !important;
         }
 
         .btn-gerenciar-custom {
-            background-color: #ffffff;
+            background-color: transparent;
             color: var(--cor-secundaria);
             border: 2px solid var(--cor-secundaria);
             font-weight: 700;
@@ -79,255 +88,197 @@
         .btn-gerenciar-custom:hover {
             background-color: var(--cor-secundaria);
             color: var(--cor-primaria);
-            border-color: var(--cor-secundaria);
         }
 
-        .total-box {
-            background-color: rgba(246, 211, 45, 0.15);
-            border: 2px dashed var(--cor-secundaria);
-            border-radius: 12px;
-            padding: 1rem;
-        }
-
-        .step-badge {
-            background-color: var(--cor-secundaria);
-            color: var(--cor-primaria);
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
+        #mensagemBusca {
             font-size: 0.85rem;
+            margin-top: 0.3rem;
+            font-weight: 600;
+        }
+        .text-cadastrado {
+            color: #198754;
+        }
+        .text-nao-cadastrado {
+            color: #dc3545;
         }
     </style>
 </head>
 <body>
 
-<!-- CABEÇALHO DO PDV COM BOTÃO GERENCIAR PEDIDOS (BRANCO, BORDA E FONTE AMARELA) -->
 <nav class="navbar navbar-expand-lg navbar-dark navbar-custom mb-4 py-2">
     <div class="container-fluid px-4">
-        <a class="navbar-brand d-flex align-items-center gap-2" th:href="@{/pedidos}">
+        <a class="navbar-brand d-flex align-items-center gap-2" th:href="@{/produtos}">
             <img th:src="@{/img/logo.png}" alt="Marmitas Sousa" class="logo-header">
-            <span class="fs-5 fw-bold">Marmitas Sousa - Caixa / PDV</span>
+            <span class="fs-5 fw-bold">Marmitas Sousa</span>
         </a>
 
-        <div class="d-flex align-items-center gap-2">
-            <!-- Botão Gerenciar Pedidos com fundo branco, bordas e fonte amarela -->
-            <a class="btn btn-gerenciar-custom d-flex align-items-center gap-2 shadow-sm" th:href="@{/pedidos/gerenciar}">
-                <i class="fa-solid fa-list-check"></i> Gerenciar Pedidos
-            </a>
-            <!-- Botão Painel Admin -->
-            <a class="btn btn-marmita d-flex align-items-center gap-2 shadow-sm" th:href="@{/produtos}">
-                <i class="fa-solid fa-user-shield"></i> Painel Admin
-            </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-1">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/produtos}"><i class="fa-solid fa-utensils me-1"></i> Cardápio</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/clientes}"><i class="fa-solid fa-users me-1"></i> Clientes</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/admin/dashboard}"><i class="fa-solid fa-chart-line me-1"></i> Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/pedidos/gerenciar}"><i class="fa-solid fa-filter me-1"></i> Pedidos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/pedidos/entregas}"><i class="fa-solid fa-motorcycle me-1"></i> Entregas</a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-2">
+                <a class="btn btn-gerenciar-custom d-flex align-items-center gap-2 shadow-sm" th:href="@{/pedidos/gerenciar}">
+                    <i class="fa-solid fa-list-check"></i> Gerenciar Pedidos
+                </a>
+                <a class="btn btn-marmita d-flex align-items-center gap-2 shadow-sm active" th:href="@{/pedidos}">
+                    <i class="fa-solid fa-cash-register"></i> Novo Pedido
+                </a>
+            </div>
         </div>
     </div>
 </nav>
 
-<div class="container pb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h3 class="fw-bold mb-0" style="color: var(--cor-primaria);">Frente de Caixa (PDV)</h3>
-            <p class="text-muted mb-0">Registre os pedidos das marmitas de forma rápida</p>
-        </div>
+<div class="container pb-5" style="max-width: 800px;">
+    <div class="mb-4">
+        <h3 class="fw-bold mb-0" style="color: var(--cor-primaria);">Novo Pedido - Etapa 1 de 2</h3>
+        <p class="text-muted mb-0">Informe os dados do cliente e o endereço de entrega</p>
     </div>
 
-    <div class="row g-4">
-        <div class="col-lg-7">
-            <div class="card card-custom">
-                <div class="card-header-custom d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-cart-plus"></i>
-                    <h5 class="card-title mb-0 fs-6 fw-bold">Montar Pedido</h5>
-                </div>
-                <div class="card-body p-4">
-                    <form th:action="@{/pedidos/salvar}" method="post">
-
-                        <input type="hidden" id="clienteId" name="clienteId">
-
-                        <div class="mb-4 pb-3 border-bottom">
-                            <h6 class="fw-bold text-secondary mb-3 d-flex align-items-center gap-2">
-                                <span class="step-badge">1</span> Dados do Cliente & Entrega
-                            </h6>
-
-                            <div class="mb-3">
-                                <label class="form-label text-secondary fw-semibold">Celular / WhatsApp</label>
-                                <input type="text" id="celular" name="celular" class="form-control" placeholder="Digite o número (ex: 11999999999)" required>
-                                <div id="statusCliente" class="form-text mt-1 fw-bold"></div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label text-secondary fw-semibold">Nome do Cliente</label>
-                                <input type="text" id="nome" name="nome" class="form-control" placeholder="Nome completo" required>
-                            </div>
-
-                            <div class="row g-2 mb-3">
-                                <div class="col-md-4">
-                                    <label class="form-label text-secondary fw-semibold">CEP</label>
-                                    <input type="text" id="cep" name="cep" class="form-control" placeholder="00000-000">
-                                </div>
-                                <div class="col-md-8">
-                                    <label class="form-label text-secondary fw-semibold">Rua / Logradouro</label>
-                                    <input type="text" id="rua" name="rua" class="form-control" placeholder="Rua, Av...">
-                                </div>
-                            </div>
-
-                            <div class="row g-2 mb-3">
-                                <div class="col-md-4">
-                                    <label class="form-label text-secondary fw-semibold">Número</label>
-                                    <input type="text" id="numero" name="numero" class="form-control">
-                                </div>
-                                <div class="col-md-8">
-                                    <label class="form-label text-secondary fw-semibold">Bairro</label>
-                                    <input type="text" id="bairro" name="bairro" class="form-control">
-                                </div>
-                            </div>
-
-                            <div class="row g-2">
-                                <div class="col-md-6">
-                                    <label class="form-label text-secondary fw-semibold">Complemento</label>
-                                    <input type="text" id="complemento" name="complemento" class="form-control" placeholder="Apto, Bloco...">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-secondary fw-semibold">Ponto de Referência</label>
-                                    <input type="text" id="pontoReferencia" name="pontoReferencia" class="form-control" placeholder="Próximo ao mercado...">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <h6 class="fw-bold text-secondary mb-3 d-flex align-items-center gap-2">
-                                <span class="step-badge">2</span> Detalhes do Pedido
-                            </h6>
-
-                            <div class="mb-3">
-                                <label class="form-label text-secondary fw-semibold">Item do Cardápio</label>
-                                <select class="form-select" name="produtoId" required>
-                                    <option value="" disabled selected>Escolha a marmita/bebida...</option>
-                                    <option th:each="p : ${produtos}" th:value="${p.id}" th:text="${p.nome} + ' (R$ ' + ${p.preco} + ')'"></option>
-                                </select>
-                            </div>
-
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <label class="form-label text-secondary fw-semibold">Quantidade</label>
-                                    <input type="number" class="form-control" name="quantidade" value="1" min="1" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-secondary fw-semibold">Forma de Pagamento</label>
-                                    <select class="form-select" name="pagamento">
-                                        <option value="PIX">PIX</option>
-                                        <option value="Cartão de Crédito/Débito">Cartão</option>
-                                        <option value="Dinheiro">Dinheiro</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn btn-marmita w-100 shadow-sm">
-                            <i class="fa-solid fa-paper-plane me-2"></i>Finalizar e Concluir Pedido
-                        </button>
-                    </form>
-                </div>
-            </div>
+    <div class="card card-custom">
+        <div class="card-header-custom d-flex align-items-center gap-2">
+            <i class="fa-solid fa-user-pen"></i>
+            <h5 class="card-title mb-0 fs-6 fw-bold">1. Dados do Cliente & Entrega</h5>
         </div>
+        <div class="card-body p-4">
+            <form th:action="@{/pedidos/etapa2}" method="post">
 
-        <div class="col-lg-5">
-            <div class="card card-custom">
-                <div class="card-header-custom d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-receipt"></i>
-                    <h5 class="card-title mb-0 fs-6 fw-bold">Últimos Pedidos</h5>
-                </div>
-                <div class="card-body p-4">
-                    <div class="total-box text-center mb-4">
-                        <span class="text-muted text-uppercase fw-bold fs-7">Vendas de Hoje</span>
-                        <h2 class="fw-bold mb-0" style="color: var(--cor-primaria);">R$ 450,00</h2>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-secondary fw-semibold">WhatsApp / Telefone</label>
+                        <div class="input-group">
+                            <input type="text" id="telefoneCliente" name="telefone" class="form-control" placeholder="(11) 90000-0000" required>
+                            <button class="btn btn-outline-secondary" type="button" id="btnBuscarCliente" title="Buscar Cliente">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                        <div id="mensagemBusca"></div>
                     </div>
-
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0 py-3 border-bottom">
-                            <div>
-                                <h6 class="mb-0 fw-bold">2x Marmita Executiva</h6>
-                                <small class="text-muted">Cliente: João Pedro (PIX)</small>
-                            </div>
-                            <span class="fw-bold text-success">R$ 44,00</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0 py-3 border-bottom">
-                            <div>
-                                <h6 class="mb-0 fw-bold">1x Marmita Fitness + Suco</h6>
-                                <small class="text-muted">Cliente: Maria Silva (Cartão)</small>
-                            </div>
-                            <span class="fw-bold text-success">R$ 28,00</span>
-                        </li>
-                    </ul>
+                    <div class="col-md-6">
+                        <label class="form-label text-secondary fw-semibold">Nome do Cliente</label>
+                        <input type="text" id="nomeCliente" name="nomeCliente" class="form-control" placeholder="Nome completo" required>
+                    </div>
                 </div>
-            </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label text-secondary fw-semibold">CEP</label>
+                        <input type="text" id="cepCliente" name="cep" class="form-control" placeholder="00000-000">
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label text-secondary fw-semibold">Endereço (Rua / Avenida)</label>
+                        <input type="text" id="ruaCliente" name="rua" class="form-control" placeholder="Nome da rua">
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label text-secondary fw-semibold">Número</label>
+                        <input type="text" id="numeroCliente" name="numero" class="form-control" placeholder="Ex: 123">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-secondary fw-semibold">Bairro</label>
+                        <input type="text" id="bairroCliente" name="bairro" class="form-control" placeholder="Bairro">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-secondary fw-semibold">Complemento / Ponto de Referência</label>
+                        <input type="text" id="complementoCliente" name="complemento" class="form-control" placeholder="Ex: Apto 42, Fundos">
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-marmita px-4 shadow-sm">
+                        Avançar para Detalhes do Pedido <i class="fa-solid fa-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-<script>
-    document.getElementById('celular').addEventListener('blur', function() {
-        const celularDigitado = this.value.trim();
-        const statusDiv = document.getElementById('statusCliente');
+<script th:inline="javascript">
+    const listaClientes = /*[[${clientes}]]*/ [];
 
-        if (celularDigitado.length < 8) return;
+    function verificarCadastro() {
+        const inputTel = document.getElementById('telefoneCliente').value.trim().replace(/\D/g, '');
+        const msgDiv = document.getElementById('mensagemBusca');
 
-        statusDiv.className = "form-text mt-1 fw-bold text-primary";
-        statusDiv.innerText = "Buscando cliente...";
+        if (!inputTel) {
+            msgDiv.textContent = "Digite um número para buscar.";
+            msgDiv.className = "text-nao-cadastrado";
+            return;
+        }
 
-        fetch('/clientes/buscar?celular=' + encodeURIComponent(celularDigitado))
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                }
-                throw new Error('Cliente não encontrado');
-            })
-            .then(cliente => {
-                document.getElementById('clienteId').value = cliente.id || '';
-                document.getElementById('nome').value = cliente.nome || '';
-                document.getElementById('cep').value = cliente.cep || '';
-                document.getElementById('rua').value = cliente.rua || '';
-                document.getElementById('numero').value = cliente.numero || '';
-                document.getElementById('bairro').value = cliente.bairro || '';
-                document.getElementById('complemento').value = cliente.complemento || '';
-                document.getElementById('pontoReferencia').value = cliente.pontoReferencia || '';
+        const clienteEncontrado = listaClientes.find(c => {
+            const telCadastrado = c.telefone ? c.telefone.toString().replace(/\D/g, '') : '';
+            return telCadastrado === inputTel;
+        });
 
-                statusDiv.className = "form-text mt-1 fw-bold text-success";
-                statusDiv.innerText = "✓ Cliente localizado no sistema!";
-            })
-            .catch(() => {
-                document.getElementById('clienteId').value = '';
-                document.getElementById('nome').value = '';
-                document.getElementById('cep').value = '';
-                document.getElementById('rua').value = '';
-                document.getElementById('numero').value = '';
-                document.getElementById('bairro').value = '';
-                document.getElementById('complemento').value = '';
-                document.getElementById('pontoReferencia').value = '';
+        if (clienteEncontrado) {
+            msgDiv.textContent = "✔ Cliente já cadastrado!";
+            msgDiv.className = "text-cadastrado";
 
-                statusDiv.className = "form-text mt-1 fw-bold text-warning";
-                statusDiv.innerText = "+ Novo cliente! Preencha os dados abaixo.";
-            });
+            document.getElementById('nomeCliente').value = clienteEncontrado.nome || '';
+            document.getElementById('cepCliente').value = clienteEncontrado.cep || '';
+            document.getElementById('ruaCliente').value = clienteEncontrado.rua || '';
+            document.getElementById('numeroCliente').value = clienteEncontrado.numero || '';
+            document.getElementById('bairroCliente').value = clienteEncontrado.bairro || '';
+            document.getElementById('complementoCliente').value = clienteEncontrado.complemento || '';
+        } else {
+            msgDiv.textContent = "❌ Este número ainda não possui cadastro.";
+            msgDiv.className = "text-nao-cadastrado";
+        }
+    }
+
+    document.getElementById('btnBuscarCliente').addEventListener('click', verificarCadastro);
+
+    document.getElementById('telefoneCliente').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            verificarCadastro();
+        }
     });
 
-    document.getElementById('cep').addEventListener('blur', function() {
-        const cepDigitado = this.value.replace(/\D/g, '');
+    document.getElementById('cepCliente').addEventListener('blur', function() {
+        const cep = this.value.replace(/\D/g, '');
 
-        if (cepDigitado.length === 8) {
-            fetch(`https://viacep.com.br/ws/${cepDigitado}/json/`)
+        if (cep.length === 8) {
+            const url = `https://viacep.com.br/ws/${cep}/json/`;
+
+            fetch(url)
                 .then(response => response.json())
-                .then(data => {
-                    if (!data.erro) {
-                        document.getElementById('rua').value = data.logradouro || '';
-                        document.getElementById('bairro').value = data.bairro || '';
-                        document.getElementById('numero').focus();
+                .then(dados => {
+                    if (!dados.erro) {
+                        document.getElementById('ruaCliente').value = dados.logradouro || '';
+                        document.getElementById('bairroCliente').value = dados.bairro || '';
+                        document.getElementById('numeroCliente').focus();
+                    } else {
+                        alert('CEP não encontrado.');
                     }
                 })
-                .catch(err => console.error('Erro ao buscar ViaCEP:', err));
+                .catch(error => {
+                    console.error('Erro ao buscar o CEP:', error);
+                });
         }
     });
 </script>

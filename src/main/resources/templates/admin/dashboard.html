@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marmitas Sousa | Dashboard Admin</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%2363452C' d='M256 32c125.7 0 228 102.3 228 228s-102.3 228-228 228S28 385.7 28 260 130.3 32 256 32zm0 64c-92.8 0-164 71.2-164 164s71.2 164 164 164 164-71.2 164-164-71.2-164-164-164z'/%3E%3Cpath fill='%23F6D32D' d='M176 220h160v64H176z'/%3E%3C/svg%3E">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --cor-primaria: #63452C;
+      --cor-secundaria: #F6D32D;
+      --cor-fundo: #F6F5F4;
+    }
+    body {
+      background-color: var(--cor-fundo);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+    }
+    .navbar-custom {
+      background-color: var(--cor-primaria);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .navbar-custom .navbar-brand, .navbar-custom .nav-link {
+      color: #ffffff;
+      font-weight: 500;
+    }
+    .navbar-custom .nav-link:hover, .navbar-custom .nav-link.active {
+      color: var(--cor-secundaria) !important;
+    }
+
+    /* LOGO ARREDONDADA */
+    .logo-header {
+      height: 45px;
+      width: 45px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid var(--cor-secundaria);
+    }
+
+    .card-custom {
+      border: none;
+      border-radius: 16px;
+      background-color: #ffffff;
+      box-shadow: 0 8px 24px rgba(99, 69, 44, 0.06);
+    }
+    .btn-marmita {
+      background-color: var(--cor-secundaria);
+      color: var(--cor-primaria);
+      font-weight: 700;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    .btn-marmita:hover {
+      background-color: #e0be23;
+      color: var(--cor-primaria);
+    }
+    .btn-gerenciar-custom {
+      background-color: transparent;
+      color: var(--cor-secundaria);
+      border: 2px solid var(--cor-secundaria);
+      font-weight: 700;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    .btn-gerenciar-custom:hover {
+      background-color: var(--cor-secundaria);
+      color: var(--cor-primaria);
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom mb-4 py-2">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand d-flex align-items-center gap-2" th:href="@{/produtos}">
+      <img th:src="@{/img/logo.png}" alt="Marmitas Sousa" class="logo-header">
+      <span class="fs-5 fw-bold">Marmitas Sousa</span>
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-1">
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/produtos}"><i class="fa-solid fa-utensils me-1"></i> Cardápio</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/clientes}"><i class="fa-solid fa-users me-1"></i> Clientes</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" th:href="@{/admin/dashboard}"><i class="fa-solid fa-chart-line me-1"></i> Dashboard</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/pedidos/gerenciar}"><i class="fa-solid fa-filter me-1"></i> Pedidos</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/pedidos/entregas}"><i class="fa-solid fa-motorcycle me-1"></i> Entregas</a>
+        </li>
+      </ul>
+
+      <div class="d-flex align-items-center gap-2">
+        <a class="btn btn-gerenciar-custom d-flex align-items-center gap-2 shadow-sm" th:href="@{/pedidos/gerenciar}">
+          <i class="fa-solid fa-list-check"></i> Gerenciar Pedidos
+        </a>
+        <a class="btn btn-marmita d-flex align-items-center gap-2 shadow-sm" th:href="@{/pedidos}">
+          <i class="fa-solid fa-cash-register"></i> Novo Pedido
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="container pb-5">
+  <h3 class="fw-bold mb-4" style="color: var(--cor-primaria);">Visão Geral do Negócio</h3>
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card card-custom p-4">
+        <span class="text-muted">Total de Clientes</span>
+        <h2 class="fw-bold mt-2" th:text="${totalClientes}">0</h2>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card card-custom p-4">
+        <span class="text-muted">Produtos Cadastrados</span>
+        <h2 class="fw-bold mt-2" th:text="${totalProdutos}">0</h2>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card card-custom p-4">
+        <span class="text-muted">Total de Pedidos</span>
+        <h2 class="fw-bold mt-2" th:text="${totalPedidos}">0</h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

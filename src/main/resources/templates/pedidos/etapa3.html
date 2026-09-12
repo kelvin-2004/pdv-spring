@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marmitas Sousa | Novo Pedido - Pagamento e Finalização</title>
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%2363452C' d='M256 32c125.7 0 228 102.3 228 228s-102.3 228-228 228S28 385.7 28 260 130.3 32 256 32zm0 64c-92.8 0-164 71.2-164 164s71.2 164 164 164 164-71.2 164-164-71.2-164-164-164z'/%3E%3Cpath fill='%23F6D32D' d='M176 220h160v64H176z'/%3E%3C/svg%3E">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --cor-primaria: #63452C;
+            --cor-secundaria: #F6D32D;
+            --cor-fundo: #F6F5F4;
+        }
+
+        body {
+            background-color: var(--cor-fundo);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+
+        .navbar-custom {
+            background-color: var(--cor-primaria);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .navbar-custom .navbar-brand, .navbar-custom .nav-link {
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .navbar-custom .nav-link:hover, .navbar-custom .nav-link.active {
+            color: var(--cor-secundaria) !important;
+        }
+
+        .logo-header {
+            height: 45px;
+            width: 45px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid var(--cor-secundaria);
+        }
+
+        .card-custom {
+            border: none;
+            border-radius: 16px;
+            background-color: #ffffff;
+            box-shadow: 0 8px 24px rgba(99, 69, 44, 0.06);
+        }
+
+        .card-header-custom {
+            background-color: var(--cor-primaria);
+            color: #ffffff;
+            border-top-left-radius: 16px !important;
+            border-top-right-radius: 16px !important;
+            padding: 1rem 1.5rem;
+        }
+
+        .btn-marmita {
+            background-color: var(--cor-secundaria) !important;
+            color: var(--cor-primaria) !important;
+            font-weight: 700;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-marmita:hover, .btn-marmita.active {
+            background-color: #e0be23 !important;
+            color: var(--cor-primaria) !important;
+        }
+
+        .btn-gerenciar-custom {
+            background-color: transparent;
+            color: var(--cor-secundaria);
+            border: 2px solid var(--cor-secundaria);
+            font-weight: 700;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-gerenciar-custom:hover {
+            background-color: var(--cor-secundaria);
+            color: var(--cor-primaria);
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom mb-4 py-2">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand d-flex align-items-center gap-2" th:href="@{/produtos}">
+            <img th:src="@{/img/logo.png}" alt="Marmitas Sousa" class="logo-header">
+            <span class="fs-5 fw-bold">Marmitas Sousa</span>
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-1">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/produtos}"><i class="fa-solid fa-utensils me-1"></i> Cardápio</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/clientes}"><i class="fa-solid fa-users me-1"></i> Clientes</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/admin/dashboard}"><i class="fa-solid fa-chart-line me-1"></i> Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/pedidos/gerenciar}"><i class="fa-solid fa-filter me-1"></i> Pedidos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/pedidos/entregas}"><i class="fa-solid fa-motorcycle me-1"></i> Entregas</a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-2">
+                <a class="btn btn-gerenciar-custom d-flex align-items-center gap-2 shadow-sm" th:href="@{/pedidos/gerenciar}">
+                    <i class="fa-solid fa-list-check"></i> Gerenciar Pedidos
+                </a>
+                <a class="btn btn-marmita d-flex align-items-center gap-2 shadow-sm active" th:href="@{/pedidos}">
+                    <i class="fa-solid fa-cash-register"></i> Novo Pedido
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container pb-5" style="max-width: 900px;">
+    <div class="mb-4">
+        <h3 class="fw-bold mb-0" style="color: var(--cor-primaria);">Novo Pedido - Etapa Final</h3>
+        <p class="text-muted mb-0">Confira os produtos, informe a taxa de entrega, forma de pagamento e finalize</p>
+    </div>
+
+    <!-- Formulário que envia para a Etapa 4 Preview -->
+    <form th:action="@{/pedidos/etapa4-preview}" method="post" id="formEtapa3">
+        <!-- Dados do Cliente mantidos ocultos -->
+        <input type="hidden" name="nomeCliente" th:value="${nomeCliente}">
+        <input type="hidden" name="telefone" th:value="${telefone}">
+        <input type="hidden" name="cep" th:value="${cep}">
+        <input type="hidden" name="rua" th:value="${rua}">
+        <input type="hidden" name="numero" th:value="${numero}">
+        <input type="hidden" name="bairro" th:value="${bairro}">
+        <input type="hidden" name="complemento" th:value="${complemento}">
+
+        <!-- Valor dos itens vindo da etapa anterior -->
+        <input type="hidden" name="valorItens" id="inputValorItens" th:value="${valorItens}">
+        <!-- JSON recuperado do controller -->
+        <input type="hidden" id="carrinhoJsonRecebido" th:value="${carrinhoJson}">
+
+        <div class="row g-4">
+            <!-- Coluna Esquerda: Resumo dos Produtos -->
+            <div class="col-lg-7">
+                <div class="card card-custom h-100">
+                    <div class="card-header-custom d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-bag-shopping"></i>
+                        <h5 class="card-title mb-0 fs-6 fw-bold">Itens do Pedido</h5>
+                    </div>
+                    <div class="card-body p-3">
+                        <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Item</th>
+                                    <th class="text-center" style="width: 50px;">Qtd</th>
+                                    <th class="text-end" style="width: 80px;">Subtotal</th>
+                                </tr>
+                                </thead>
+                                <tbody id="listaItensResumo">
+                                <!-- Inserido dinamicamente via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-top">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Subtotal dos Itens:</span>
+                                <span class="fw-semibold">R$ <span id="spanValorItens">0,00</span></span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2 align-items-center">
+                                <span class="text-muted">Taxa de Entrega (R$):</span>
+                                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end" style="width: 110px;" name="taxaEntrega" id="inputTaxaEntrega" value="0.00" oninput="calcularTotalGeral()" required>
+                            </div>
+                            <div class="d-flex justify-content-between mt-3 pt-2 border-top">
+                                <span class="fw-bold fs-6" style="color: var(--cor-primaria);">Total Geral:</span>
+                                <span class="fw-bold fs-5 text-success">R$ <span id="spanTotalGeral">0,00</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna Direita: Pagamento, Troco e Observações -->
+            <div class="col-lg-5">
+                <div class="card card-custom h-100">
+                    <div class="card-header-custom d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-credit-card"></i>
+                        <h5 class="card-title mb-0 fs-6 fw-bold">Pagamento & Entrega</h5>
+                    </div>
+                    <div class="card-body p-4 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="mb-3">
+                                <label class="form-label text-secondary fw-semibold">Forma de Pagamento</label>
+                                <select class="form-select" name="formaPagamento" id="selectFormaPagamento" onchange="verificarFormaPagamento()" required>
+                                    <option value="" disabled selected>Selecione...</option>
+                                    <option value="Dinheiro">Dinheiro</option>
+                                    <option value="Pix">Pix</option>
+                                    <option value="Cartão de Crédito">Cartão de Crédito</option>
+                                    <option value="Cartão de Débito">Cartão de Débito</option>
+                                </select>
+                            </div>
+
+                            <!-- Campo de troco com cálculo em tempo real -->
+                            <div class="mb-3" id="divTroco" style="display: none;">
+                                <label class="form-label text-secondary fw-semibold">Troco para quanto? (R$)</label>
+                                <input type="number" step="0.01" min="0" class="form-control" name="trocoPara" id="inputTrocoPara" placeholder="Ex: 50.00" oninput="calcularTroco()">
+                                <small class="text-muted d-mt-1 mt-1 d-block" id="textoTrocoCalculado" style="font-weight: 600;"></small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-secondary fw-semibold">Observações Gerais</label>
+                                <textarea class="form-control" name="observacoes" rows="3" placeholder="Ex: Entrar pelos fundos, campainha quebrada..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                            <!-- Botão voltar retornando à etapa 2 -->
+                            <a th:href="@{/pedidos}" class="btn btn-outline-secondary px-3">
+                                <i class="fa-solid fa-arrow-left me-2"></i> Voltar
+                            </a>
+                            <button type="submit" class="btn btn-marmita px-4 shadow-sm">
+                                Visualizar Resumo <i class="fa-solid fa-eye ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        carregarCarrinhoEtapa3();
+        calcularTotalGeral();
+    });
+
+    function carregarCarrinhoEtapa3() {
+        let jsonString = document.getElementById('carrinhoJsonRecebido').value;
+        const tbody = document.getElementById('listaItensResumo');
+
+        // Se o input veio vazio (ex: usuário voltou da página 4), tenta resgatar do localStorage da Etapa 2
+        if (!jsonString || jsonString.trim() === "" || jsonString === "null") {
+            jsonString = localStorage.getItem('carrinhoUltimoPedido');
+        } else {
+            // Se veio preenchido pelo Java, atualiza o localStorage para garantir persistência caso volte da etapa 4
+            localStorage.setItem('carrinhoUltimoPedido', jsonString);
+        }
+
+        let subtotalItens = parseFloat(document.getElementById('inputValorItens').value) || 0;
+
+        // Se o valor dos itens veio zerado mas temos o JSON salvo, recalcula o subtotal
+        if (subtotalItens === 0 && jsonString) {
+            try {
+                const tempCarrinho = JSON.parse(jsonString);
+                subtotalItens = tempCarrinho.reduce((acc, item) => acc + (item.preco * item.quantidade), 0);
+                document.getElementById('inputValorItens').value = subtotalItens.toFixed(2);
+            } catch(e) {}
+        }
+
+        document.getElementById('spanValorItens').textContent = subtotalItens.toFixed(2).replace('.', ',');
+
+        if (!jsonString) {
+            tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted py-3">Nenhum produto encontrado.</td></tr>`;
+            return;
+        }
+
+        try {
+            const carrinho = JSON.parse(jsonString);
+            tbody.innerHTML = '';
+
+            if (carrinho.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted py-3">Nenhum produto encontrado.</td></tr>`;
+                return;
+            }
+
+            carrinho.forEach(item => {
+                const subtotalItem = item.preco * item.quantidade;
+                let obsHtml = item.observacao ? `<small class="text-muted fst-italic d-block">Obs: ${item.observacao}</small>` : '';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>
+                            <span class="fw-bold d-block">${item.nome}</span>
+                            ${obsHtml}
+                        </td>
+                        <td class="text-center">${item.quantidade}</td>
+                        <td class="text-end">R$ ${subtotalItem.toFixed(2).replace('.', ',')}</td>
+                    </tr>
+                `;
+            });
+        } catch (e) {
+            console.error("Erro ao fazer parse do carrinho JSON:", e);
+            tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger py-3">Erro ao carregar itens.</td></tr>`;
+        }
+    }
+
+    function calcularTotalGeral() {
+        const subtotalItens = parseFloat(document.getElementById('inputValorItens').value) || 0;
+        const taxaEntrega = parseFloat(document.getElementById('inputTaxaEntrega').value) || 0;
+        const totalGeral = subtotalItens + taxaEntrega;
+
+        document.getElementById('spanTotalGeral').textContent = totalGeral.toFixed(2).replace('.', ',');
+
+        // Atualiza o troco também caso o total geral mude (ex: alterando a taxa de entrega)
+        calcularTroco();
+    }
+
+    function calcularTroco() {
+        const formaPagamento = document.getElementById('selectFormaPagamento').value;
+        const textoTroco = document.getElementById('textoTrocoCalculado');
+
+        if (formaPagamento !== 'Dinheiro') {
+            textoTroco.textContent = '';
+            return;
+        }
+
+        const subtotalItens = parseFloat(document.getElementById('inputValorItens').value) || 0;
+        const taxaEntrega = parseFloat(document.getElementById('inputTaxaEntrega').value) || 0;
+        const totalGeral = subtotalItens + taxaEntrega;
+
+        const valorRecebido = parseFloat(document.getElementById('inputTrocoPara').value) || 0;
+
+        if (valorRecebido > 0) {
+            if (valorRecebido >= totalGeral) {
+                const troco = valorRecebido - totalGeral;
+                textoTroco.className = "text-success fw-bold d-block mt-1";
+                textoTroco.textContent = `Troco a devolver: R$ ${troco.toFixed(2).replace('.', ',')}`;
+            } else {
+                textoTroco.className = "text-danger fw-bold d-block mt-1";
+                textoTroco.textContent = `⚠️ O valor recebido é menor que o total do pedido!`;
+            }
+        } else {
+            textoTroco.textContent = '';
+        }
+    }
+
+    function verificarFormaPagamento() {
+        const formaPagamento = document.getElementById('selectFormaPagamento').value;
+        const divTroco = document.getElementById('divTroco');
+        const inputTroco = document.getElementById('inputTrocoPara');
+        const textoTroco = document.getElementById('textoTrocoCalculado');
+
+        if (formaPagamento === 'Dinheiro') {
+            divTroco.style.display = 'block';
+            inputTroco.required = true;
+        } else {
+            divTroco.style.display = 'none';
+            inputTroco.required = false;
+            inputTroco.value = '';
+            textoTroco.textContent = '';
+        }
+    }
+</script>
+</body>
+</html>

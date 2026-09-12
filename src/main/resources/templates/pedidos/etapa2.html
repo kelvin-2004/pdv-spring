@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marmitas Sousa | Novo Pedido - Detalhes</title>
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%2363452C' d='M256 32c125.7 0 228 102.3 228 228s-102.3 228-228 228S28 385.7 28 260 130.3 32 256 32zm0 64c-92.8 0-164 71.2-164 164s71.2 164 164 164 164-71.2 164-164-71.2-164-164-164z'/%3E%3Cpath fill='%23F6D32D' d='M176 220h160v64H176z'/%3E%3C/svg%3E">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --cor-primaria: #63452C;
+            --cor-secundaria: #F6D32D;
+            --cor-fundo: #F6F5F4;
+        }
+
+        body {
+            background-color: var(--cor-fundo);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+
+        .navbar-custom {
+            background-color: var(--cor-primaria);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .navbar-custom .navbar-brand, .navbar-custom .nav-link {
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .navbar-custom .nav-link:hover, .navbar-custom .nav-link.active {
+            color: var(--cor-secundaria) !important;
+        }
+
+        .logo-header {
+            height: 45px;
+            width: 45px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid var(--cor-secundaria);
+        }
+
+        .card-custom {
+            border: none;
+            border-radius: 16px;
+            background-color: #ffffff;
+            box-shadow: 0 8px 24px rgba(99, 69, 44, 0.06);
+        }
+
+        .card-header-custom {
+            background-color: var(--cor-primaria);
+            color: #ffffff;
+            border-top-left-radius: 16px !important;
+            border-top-right-radius: 16px !important;
+            padding: 1rem 1.5rem;
+        }
+
+        .btn-marmita {
+            background-color: var(--cor-secundaria) !important;
+            color: var(--cor-primaria) !important;
+            font-weight: 700;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-marmita:hover, .btn-marmita.active {
+            background-color: #e0be23 !important;
+            color: var(--cor-primaria) !important;
+        }
+
+        .btn-gerenciar-custom {
+            background-color: transparent;
+            color: var(--cor-secundaria);
+            border: 2px solid var(--cor-secundaria);
+            font-weight: 700;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-gerenciar-custom:hover {
+            background-color: var(--cor-secundaria);
+            color: var(--cor-primaria);
+        }
+
+        .produto-item-card {
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            background-color: #fff;
+            transition: all 0.2s;
+        }
+
+        .produto-item-card:hover {
+            border-color: var(--cor-primaria);
+            box-shadow: 0 2px 8px rgba(99, 69, 44, 0.08);
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom mb-4 py-2">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand d-flex align-items-center gap-2" th:href="@{/produtos}">
+            <img th:src="@{/img/logo.png}" alt="Marmitas Sousa" class="logo-header">
+            <span class="fs-5 fw-bold">Marmitas Sousa</span>
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-1">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/produtos}"><i class="fa-solid fa-utensils me-1"></i> Cardápio</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/clientes}"><i class="fa-solid fa-users me-1"></i> Clientes</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/admin/dashboard}"><i class="fa-solid fa-chart-line me-1"></i> Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/pedidos/gerenciar}"><i class="fa-solid fa-filter me-1"></i> Pedidos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/pedidos/entregas}"><i class="fa-solid fa-motorcycle me-1"></i> Entregas</a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-2">
+                <a class="btn btn-gerenciar-custom d-flex align-items-center gap-2 shadow-sm" th:href="@{/pedidos/gerenciar}">
+                    <i class="fa-solid fa-list-check"></i> Gerenciar Pedidos
+                </a>
+                <a class="btn btn-marmita d-flex align-items-center gap-2 shadow-sm active" th:href="@{/pedidos}">
+                    <i class="fa-solid fa-cash-register"></i> Novo Pedido
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container pb-5" style="max-width: 1100px;">
+    <div class="mb-4">
+        <h3 class="fw-bold mb-0" style="color: var(--cor-primaria);">Novo Pedido - Etapa 2 de 2</h3>
+        <p class="text-muted mb-0">Selecione a categoria, escolha os produtos, adicione observações individuais e monte o seu pedido</p>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- DIV 1: Filtro de Categoria e Lista de Produtos -->
+        <div class="col-lg-7">
+            <div class="card card-custom h-100">
+                <div class="card-header-custom d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-utensils"></i>
+                    <h5 class="card-title mb-0 fs-6 fw-bold">Cardápio de Produtos</h5>
+                </div>
+                <div class="card-body p-4">
+
+                    <div class="mb-4">
+                        <label class="form-label text-secondary fw-semibold">Filtrar por Categoria</label>
+                        <select class="form-select" id="filtroCategoria">
+                            <option value="" selected>Todas as categorias...</option>
+                            <option th:each="cat : ${categorias}" th:value="${cat}" th:text="${cat}">CATEGORIA</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3" style="max-height: 420px; overflow-y: auto;" id="containerProdutos">
+                        <div th:each="produto : ${produtos}" class="produto-item-card d-flex align-items-center justify-content-between gap-2" th:data-categoria="${produto.CategoriaPedido}">
+                            <div>
+                                <h6 class="mb-0 fw-bold text-dark" th:text="${produto.nome}">Nome do Produto</h6>
+                                <small class="text-muted d-block" th:text="${produto.descricao}">Descrição</small>
+                                <span class="text-success fw-bold fs-6">R$ <span th:text="${#numbers.formatDecimal(produto.preco, 1, 'POINT', 2, 'COMMA')}">0,00</span></span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="number" class="form-control form-control-sm text-center" value="1" min="1" style="width: 60px;" th:id="'qtd-' + ${produto.id}">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" title="Adicionar Observação" th:onclick="abrirModalObs([[${produto.id}]], [[${produto.nome}]])">
+                                    <i class="fa-solid fa-comment-dots"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-marmita" title="Adicionar à sacola" th:onclick="adicionarAoCarrinho([[${produto.id}]], [[${produto.nome}]], [[${produto.preco}]])">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- DIV 2: Produtos Adicionados / Sacola -->
+        <div class="col-lg-5">
+            <div class="card card-custom h-100">
+                <div class="card-header-custom d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <h5 class="card-title mb-0 fs-6 fw-bold">Produtos Adicionados</h5>
+                </div>
+                <div class="card-body p-3 d-flex flex-column justify-content-between">
+
+                    <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Item & Obs</th>
+                                <th class="text-center" style="width: 50px;">Qtd</th>
+                                <th class="text-end" style="width: 70px;">Subtotal</th>
+                                <th class="text-center" style="width: 40px;"></th>
+                            </tr>
+                            </thead>
+                            <tbody id="listaItensPedido">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">Nenhum produto na sacola</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted fw-semibold">Total de Itens na Sacola:</span>
+                            <span class="fw-bold fs-5" id="totalItensQtd">0</span>
+                        </div>
+
+                        <!-- Formulário que envia os dados para a Etapa 3 -->
+                        <form th:action="@{/pedidos/etapa3}" method="post" id="formAvancarEtapa3" onsubmit="preencherDadosSubmissao()">
+                            <!-- Dados do Cliente -->
+                            <input type="hidden" name="nomeCliente" th:value="${nomeCliente}">
+                            <input type="hidden" name="telefone" th:value="${telefone}">
+                            <input type="hidden" name="cep" th:value="${cep}">
+                            <input type="hidden" name="rua" th:value="${rua}">
+                            <input type="hidden" name="numero" th:value="${numero}">
+                            <input type="hidden" name="bairro" th:value="${bairro}">
+                            <input type="hidden" name="complemento" th:value="${complemento}">
+
+                            <!-- Campo oculto do valor total dos itens -->
+                            <input type="hidden" name="valorItens" id="inputValorItens" value="0.00">
+                            <!-- Input dinâmico que vai carregar o JSON dos produtos para a Etapa 3 -->
+                            <input type="hidden" name="carrinhoJson" id="inputCarrinhoJson">
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <!-- Botão voltar corrigido para retornar no histórico do navegador (Etapa 1) -->
+                                <button type="button" class="btn btn-outline-secondary px-3" onclick="window.history.back()">
+                                    <i class="fa-solid fa-arrow-left me-2"></i> Voltar
+                                </button>
+                                <button type="submit" class="btn btn-marmita px-4 shadow-sm" onclick="return validarAvancoCarrinho()">
+                                    Avançar <i class="fa-solid fa-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal de Observação -->
+<div class="modal fade" id="modalObservacao" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header" style="background-color: var(--cor-primaria); color: #fff; border-top-left-radius: 16px; border-top-right-radius: 16px;">
+                <h5 class="modal-title fs-6 fw-bold"><i class="fa-solid fa-comment-dots me-2"></i> Observação do Item</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-2" id="nomeProdutoModalLabel" style="font-weight: 600;"></p>
+                <input type="hidden" id="produtoIdModal">
+                <textarea class="form-control" id="textoObservacaoItem" rows="3" placeholder="Ex: Sem sal, separar a salada..."></textarea>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-marmita btn-sm" onclick="salvarObservacaoItem()">Salvar Observação</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Carrega o carrinho do localStorage ao abrir a página (caso tenha voltado da Etapa 3)
+    let carrinho = JSON.parse(localStorage.getItem('carrinhoUltimoPedido')) || [];
+
+    document.addEventListener("DOMContentLoaded", function() {
+        atualizarTabelaCarrinho();
+    });
+
+    document.getElementById('filtroCategoria').addEventListener('change', function() {
+        const categoriaSelecionada = this.value;
+        document.querySelectorAll('.produto-item-card').forEach(card => {
+            const categoriaCard = card.getAttribute('data-categoria');
+            if (categoriaSelecionada === "" || categoriaCard === categoriaSelecionada) {
+                card.style.display = "flex";
+            } else {
+                card.style.display = "none";
+            }
+        });
+    });
+
+    function adicionarAoCarrinho(id, nome, preco) {
+        const inputQtd = document.getElementById('qtd-' + id);
+        const quantidade = parseInt(inputQtd.value) || 1;
+        const precoNum = parseFloat(preco) || 0;
+
+        const itemExistente = carrinho.find(item => item.id === id);
+        if (itemExistente) {
+            itemExistente.quantidade += quantidade;
+        } else {
+            carrinho.push({
+                id: id,
+                nome: nome,
+                preco: precoNum,
+                quantidade: quantidade,
+                observacao: ''
+            });
+        }
+
+        inputQtd.value = 1;
+        atualizarTabelaCarrinho();
+    }
+
+    function removerDoCarrinho(index) {
+        carrinho.splice(index, 1);
+        atualizarTabelaCarrinho();
+    }
+
+    function atualizarTabelaCarrinho() {
+        const tbody = document.getElementById('listaItensPedido');
+        const contadorTotal = document.getElementById('totalItensQtd');
+        const inputValorItens = document.getElementById('inputValorItens');
+
+        // Salva sempre no localStorage para persistir se o usuário navegar entre as etapas
+        localStorage.setItem('carrinhoUltimoPedido', JSON.stringify(carrinho));
+
+        tbody.innerHTML = '';
+        let totalPecas = 0;
+        let subtotalGeral = 0.0;
+
+        if (carrinho.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">Nenhum produto na sacola</td></tr>`;
+            contadorTotal.textContent = '0';
+            inputValorItens.value = '0.00';
+            return;
+        }
+
+        carrinho.forEach((item, index) => {
+            totalPecas += item.quantidade;
+            const subtotalItem = item.preco * item.quantidade;
+            subtotalGeral += subtotalItem;
+
+            let obsHtml = item.observacao ? `<small class="text-muted fst-italic d-block">Obs: ${item.observacao}</small>` : '';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>
+                        <span class="fw-bold d-block">${item.nome}</span>
+                        ${obsHtml}
+                    </td>
+                    <td class="text-center">${item.quantidade}</td>
+                    <td class="text-end">R$ ${subtotalItem.toFixed(2).replace('.', ',')}</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="removerDoCarrinho(${index})">
+                            <i class="fa-solid fa-trash text-danger"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        contadorTotal.textContent = totalPecas;
+        inputValorItens.value = subtotalGeral.toFixed(2);
+    }
+
+    function preencherDadosSubmissao() {
+        document.getElementById('inputCarrinhoJson').value = JSON.stringify(carrinho);
+    }
+
+    function validarAvancoCarrinho() {
+        if (carrinho.length === 0) {
+            alert('Adicione pelo menos um produto à sacola antes de avançar.');
+            return false;
+        }
+        return true;
+    }
+
+    function abrirModalObs(idProduto, nomeProduto) {
+        document.getElementById('produtoIdModal').value = idProduto;
+        document.getElementById('nomeProdutoModalLabel').textContent = nomeProduto;
+        document.getElementById('textoObservacaoItem').value = '';
+        new bootstrap.Modal(document.getElementById('modalObservacao')).show();
+    }
+
+    function salvarObservacaoItem() {
+        const id = document.getElementById('produtoIdModal').value;
+        const obs = document.getElementById('textoObservacaoItem').value;
+        const item = carrinho.find(i => i.id == id);
+        if (item) {
+            item.observacao = obs;
+            atualizarTabelaCarrinho();
+        }
+        bootstrap.Modal.getInstance(document.getElementById('modalObservacao')).hide();
+    }
+</script>
+</body>
+</html>

@@ -28,6 +28,8 @@ public class produtos {
     private Boolean ativo = true;
     @Column(name = "caminhoImg", nullable = false)
     private String imgUrl;
+    @Column(nullable = false)
+    private Integer estoque = 0;
 
 
 

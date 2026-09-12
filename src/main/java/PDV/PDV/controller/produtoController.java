@@ -23,7 +23,6 @@ public class produtoController {
     @Autowired
     private produtoRepository produtoRepository;
 
-    // Caminho da pasta externa onde as imagens serão salvas
     private static final String UPLOAD_DIR = "uploads/";
 
     @GetMapping
@@ -48,28 +47,21 @@ public class produtoController {
 
     @PostMapping("/salvar")
     public String salvarProduto(@ModelAttribute produtos produto,
-                                @RequestParam("file") MultipartFile file) {
+                                @RequestParam(value = "file", required = false) MultipartFile file) {
         try {
-            // Processa o upload da imagem apenas se um arquivo foi enviado
             if (file != null && !file.isEmpty()) {
                 Path caminhoDiretorio = Paths.get(UPLOAD_DIR);
 
-                // Cria a pasta uploads na raiz do projeto caso não exista
                 if (!Files.exists(caminhoDiretorio)) {
                     Files.createDirectories(caminhoDiretorio);
                 }
 
-                // Gera um nome único para evitar conflitos de arquivos iguais
                 String nomeArquivo = System.currentTimeMillis() + "_" + file.getOriginalFilename();
                 Path caminhoCompleto = caminhoDiretorio.resolve(nomeArquivo);
 
-                // Copia o arquivo para a pasta física
                 Files.copy(file.getInputStream(), caminhoCompleto, StandardCopyOption.REPLACE_EXISTING);
-
-                // Salva o caminho relativo que será lido pelo WebConfig e Thymeleaf
                 produto.setImgUrl("/uploads/" + nomeArquivo);
             } else if (produto.getId() != null) {
-                // Caso seja uma edição e o usuário não tenha enviado uma nova foto, mantém a antiga
                 Optional<produtos> produtoExistente = produtoRepository.findById(produto.getId());
                 produtoExistente.ifPresent(p -> produto.setImgUrl(p.getImgUrl()));
             }
@@ -90,7 +82,7 @@ public class produtoController {
         if (produtoOpt.isPresent()) {
             model.addAttribute("novoProduto", produtoOpt.get());
             model.addAttribute("produtos", produtoRepository.findAll());
-            return "produtos/lista"; // Retorna para a mesma página preenchendo o formulário
+            return "produtos/lista";
         }
 
         return "redirect:/produtos";

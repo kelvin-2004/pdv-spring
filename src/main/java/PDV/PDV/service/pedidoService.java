@@ -1,26 +1,33 @@
 package PDV.PDV.service;
 
 import PDV.PDV.model.Enum.statusPedido;
-import PDV.PDV.model.clientes;
 import PDV.PDV.model.pedido;
 import PDV.PDV.repository.pedidoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
-
 @Service
 public class pedidoService {
+
     @Autowired
     private pedidoRepository pedidoRepo;
-    public pedido novoPedido(pedido novoPedido){
-    novoPedido.setDataHoraPedido(OffsetDateTime.now());
-    novoPedido.setStatusPedido(statusPedido.PREPARANDO);
-    return pedidoRepo.save(novoPedido);
+
+    public pedido novoPedido(pedido novoPedido) {
+        novoPedido.setDataHoraPedido(OffsetDateTime.now());
+        novoPedido.setStatusPedido(statusPedido.PREPARANDO);
+
+        // Define automaticamente o número do pedido para este cliente
+        if (novoPedido.getCliente() != null) {
+            long totalPedidosAnteriores = pedidoRepo.countByCliente(novoPedido.getCliente());
+            int proximoNumero = (int) totalPedidosAnteriores + 1;
+            novoPedido.setNumeroPedidoCliente(proximoNumero);
+        }
+
+        return pedidoRepo.save(novoPedido);
     }
 
     public pedido atualizarStatus(Long id, statusPedido novoStatus) {
@@ -35,12 +42,16 @@ public class pedidoService {
 
         return pedidoRepo.save(p);
     }
-public List<pedido> listarStatus(statusPedido status){
+
+    public List<pedido> listarStatus(statusPedido status) {
         return pedidoRepo.findByStatusPedido(status);
-}
-public Optional<pedido> procurarID(Long id){
+    }
+
+    public Optional<pedido> procurarID(Long id) {
         return pedidoRepo.findById(id);
-}
-    public List<pedido> listarTodos(){
+    }
+
+    public List<pedido> listarTodos() {
         return pedidoRepo.findAll();
-    }}
+    }
+}
