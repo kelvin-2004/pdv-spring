@@ -144,7 +144,52 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h3 class="fw-bold mb-0" style="color: var(--cor-primaria);">Controle de Entregas</h3>
-            <p class="text-muted mb-0">Acompanhe os pedidos despachados, rotas e status dos entregadores</p>
+            <p class="text-muted mb-0">Consulte as taxas de entrega para calcular o pagamento do motoboy</p>
+        </div>
+    </div>
+
+    <form class="card card-custom mb-4" method="get" th:action="@{/pedidos/entregas}">
+        <div class="card-body p-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="dataInicial" class="form-label fw-semibold">Data inicial</label>
+                    <input type="date" id="dataInicial" name="dataInicial" class="form-control" th:value="${dataInicial}">
+                </div>
+                <div class="col-md-3">
+                    <label for="dataFinal" class="form-label fw-semibold">Data final</label>
+                    <input type="date" id="dataFinal" name="dataFinal" class="form-control" th:value="${dataFinal}">
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label fw-semibold">Status do pedido</label>
+                    <select id="status" name="status" class="form-select">
+                        <option value="TODOS" th:selected="${statusSelecionado == 'TODOS'}">Todos os status</option>
+                        <option th:each="statusItem : ${statusDisponiveis}"
+                                th:value="${statusItem.name()}"
+                                th:text="${statusItem.name()}"
+                                th:selected="${statusSelecionado == statusItem.name()}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-marmita w-100">
+                        <i class="fa-solid fa-filter me-1"></i> Filtrar entregas
+                    </button>
+                </div>
+            </div>
+            <div class="small text-muted mt-3">
+                <i class="fa-solid fa-circle-info me-1"></i>
+                São exibidos pedidos com taxa de entrega igual ou superior a
+                <strong th:text="${'R$ ' + #numbers.formatDecimal(taxaMinima, 1, 2).replace('.', ',')}">R$ 5,00</strong>.
+            </div>
+        </div>
+    </form>
+
+    <div class="card card-custom mb-4 border-start border-4 border-success">
+        <div class="card-body d-flex justify-content-between align-items-center py-3">
+            <div>
+                <div class="text-muted small">Total a pagar ao motoboy</div>
+                <div class="text-muted small" th:text="${entregas.size() + ' entrega(s) no período selecionado'}">0 entrega(s) no período selecionado</div>
+            </div>
+            <strong class="fs-3 text-success" th:text="${'R$ ' + #numbers.formatDecimal(totalTaxas, 1, 2).replace('.', ',')}">R$ 0,00</strong>
         </div>
     </div>
 
@@ -153,7 +198,7 @@
         <div class="card-header-custom d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-2">
                 <i class="fa-solid fa-motorcycle"></i>
-                <h5 class="card-title mb-0 fs-6 fw-bold">Lista de Entregas Ativas</h5>
+                <h5 class="card-title mb-0 fs-6 fw-bold">Pedidos com taxa de entrega</h5>
             </div>
         </div>
         <div class="card-body p-4">
@@ -165,7 +210,8 @@
                         <th># Pedido</th>
                         <th>Cliente</th>
                         <th>Endereço de Entrega</th>
-                        <th>Entregador</th>
+                        <th class="text-center">Data</th>
+                        <th class="text-end">Taxa</th>
                         <th class="text-center">Status</th>
                         <th class="text-center">Ações</th>
                     </tr>
@@ -175,21 +221,25 @@
                         <td class="fw-bold" th:text="${'#' + entrega.id}">#102</td>
                         <td>
                             <div class="fw-bold" th:text="${entrega.cliente != null ? entrega.cliente.nome : 'Cliente'}">Nome</div>
-                            <small class="text-muted" th:text="${entrega.cliente != null ? entrega.cliente.telefone : ''}">(11) 90000-0000</small>
+                            <small class="text-muted" th:text="${entrega.cliente != null ? entrega.cliente.celular : ''}">(11) 90000-0000</small>
                         </td>
-                        <td th:text="${entrega.enderecoEntrega != null ? entrega.enderecoEntrega : 'Endereço não informado'}">Endereço</td>
-                        <td th:text="${entrega.entregador != null ? entrega.entregador : 'Não atribuído'}">Entregador</td>
+                        <td th:text="${entrega.cliente != null ? entrega.cliente.rua + ', ' + entrega.cliente.numero + ' - ' + entrega.cliente.bairro : 'Endereço não informado'}">Endereço</td>
+                        <td class="text-center" th:text="${#temporals.format(entrega.dataHoraLocal, 'dd/MM/yyyy HH:mm')}">15/09/2026 18:00</td>
+                        <td class="text-end fw-bold text-success" th:text="${'R$ ' + #numbers.formatDecimal(entrega.taxaEntrega, 1, 2).replace('.', ',')}">R$ 5,00</td>
                         <td class="text-center">
-                            <span class="badge bg-warning text-dark" th:text="${entrega.statusEntrega != null ? entrega.statusEntrega : 'Em Rota'}">Em Rota</span>
+                            <span class="badge bg-secondary" th:text="${entrega.statusPedido}">STATUS</span>
                         </td>
                         <td class="text-center">
-                            <a th:href="@{/pedidos/entregas/concluir/{id}(id=${entrega.id})}" class="btn btn-sm btn-success" title="Concluir Entrega">
+                            <a th:if="${entrega.statusPedido != T(PDV.PDV.model.Enum.statusPedido).CONCLUIDO and entrega.statusPedido != T(PDV.PDV.model.Enum.statusPedido).CANCELADO}"
+                               th:href="@{/pedidos/entregas/concluir/{id}(id=${entrega.id})}" class="btn btn-sm btn-success" title="Concluir Entrega">
                                 <i class="fa-solid fa-check me-1"></i> Concluir
                             </a>
+                            <span th:if="${entrega.statusPedido == T(PDV.PDV.model.Enum.statusPedido).CONCLUIDO}" class="text-success small fw-semibold">Concluída</span>
+                            <span th:if="${entrega.statusPedido == T(PDV.PDV.model.Enum.statusPedido).CANCELADO}" class="text-danger small fw-semibold">Cancelada</span>
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(entregas)}">
-                        <td colspan="6" class="text-center text-muted py-4">Nenhuma entrega pendente ou em andamento no momento.</td>
+                        <td colspan="7" class="text-center text-muted py-4">Nenhum pedido com taxa de R$ 5,00 ou mais no período e status selecionados.</td>
                     </tr>
                     </tbody>
                 </table>

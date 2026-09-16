@@ -143,6 +143,7 @@
 
     <!-- Formulário que envia para a Etapa 4 Preview -->
     <form th:action="@{/pedidos/etapa4-preview}" method="post" id="formEtapa3">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
         <!-- Dados do Cliente mantidos ocultos -->
         <input type="hidden" name="nomeCliente" th:value="${nomeCliente}">
         <input type="hidden" name="telefone" th:value="${telefone}">
@@ -156,6 +157,7 @@
         <input type="hidden" name="valorItens" id="inputValorItens" th:value="${valorItens}">
         <!-- JSON recuperado do controller -->
         <input type="hidden" id="carrinhoJsonRecebido" th:value="${carrinhoJson}">
+        <input type="hidden" name="carrinhoJson" th:value="${carrinhoJson}">
 
         <div class="row g-4">
             <!-- Coluna Esquerda: Resumo dos Produtos -->

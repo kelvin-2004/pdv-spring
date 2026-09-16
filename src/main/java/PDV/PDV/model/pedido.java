@@ -10,6 +10,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Data
@@ -60,11 +61,24 @@ public class pedido {
     @Column(precision = 10, scale = 2)
     private BigDecimal trocoPara;
 
+    @Column(length = 1000)
+    private String observacoes;
+
     public BigDecimal getTrocoPara() {
         return trocoPara;
     }
 
     public void setTrocoPara(BigDecimal trocoPara) {
         this.trocoPara = trocoPara;
+    }
+
+    @Transient
+    public OffsetDateTime getDataHoraLocal() {
+        if (dataHoraPedido == null) {
+            return null;
+        }
+        ZoneId zonaComercial = ZoneId.of("America/Sao_Paulo");
+        return dataHoraPedido.withOffsetSameInstant(
+                zonaComercial.getRules().getOffset(dataHoraPedido.toInstant()));
     }
 }

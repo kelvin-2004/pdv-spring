@@ -218,6 +218,7 @@
                 </div>
                 <div class="card-body p-4">
                     <form th:action="@{/produtos/salvar}" th:object="${novoProduto}" method="post" enctype="multipart/form-data" id="formProduto">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                         <input type="hidden" th:field="*{id}">
 

@@ -15,8 +15,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import org.springframework.format.annotation.DateTimeFormat;
 
 @Controller
 @RequestMapping("/pedidos")
@@ -37,6 +42,9 @@ public class pedidoController {
     @Autowired
     private ImpressaoService impressaoService; // Injeção correta do serviço de impressão
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @GetMapping
     public String index(Model model) {
         model.addAttribute("clientes", clienteService.listarTodos());
@@ -46,17 +54,63 @@ public class pedidoController {
 
     @GetMapping("/gerenciar")
     public String gerenciarPedidos(Model model) {
-        model.addAttribute("preparando", pedidoService.listarStatus(statusPedido.PREPARANDO));
-        model.addAttribute("aguardandoEntregador", pedidoService.listarStatus(statusPedido.AGUARDANDO_ENTREGADOR));
-        model.addAttribute("aCaminho", pedidoService.listarStatus(statusPedido.A_CAMINHO));
-        model.addAttribute("concluidos", pedidoService.listarStatus(statusPedido.CONCLUIDO));
-        model.addAttribute("cancelados", pedidoService.listarStatus(statusPedido.CANCELADO));
+        model.addAttribute("preparando", pedidoService.listarStatusDoDia(statusPedido.PREPARANDO));
+        model.addAttribute("aguardandoEntregador", pedidoService.listarStatusDoDia(statusPedido.AGUARDANDO_ENTREGADOR));
+        model.addAttribute("aCaminho", pedidoService.listarStatusDoDia(statusPedido.A_CAMINHO));
+        model.addAttribute("concluidos", pedidoService.listarStatusDoDia(statusPedido.CONCLUIDO));
+        model.addAttribute("cancelados", pedidoService.listarStatusDoDia(statusPedido.CANCELADO));
         return "pedidos/gerenciar";
     }
 
     @GetMapping("/entregas")
-    public String paginaEntregas(Model model) {
-        model.addAttribute("entregas", pedidoService.listarStatus(statusPedido.A_CAMINHO));
+    public String paginaEntregas(
+            @RequestParam(value = "dataInicial", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
+            @RequestParam(value = "dataFinal", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal,
+            @RequestParam(value = "status", required = false) String status,
+            Model model) {
+        ZoneId zona = ZoneId.systemDefault();
+        LocalDate hoje = LocalDate.now(zona);
+        dataInicial = dataInicial != null ? dataInicial : hoje;
+        dataFinal = dataFinal != null ? dataFinal : hoje;
+        if (dataFinal.isBefore(dataInicial)) {
+            LocalDate temp = dataInicial;
+            dataInicial = dataFinal;
+            dataFinal = temp;
+        }
+
+        statusPedido statusFiltro = null;
+        if (status != null && !status.isBlank() && !"TODOS".equalsIgnoreCase(status)) {
+            try {
+                statusFiltro = statusPedido.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException ignored) {
+                status = "TODOS";
+            }
+        }
+        if (status == null || status.isBlank()) {
+            status = "TODOS";
+        }
+
+        BigDecimal taxaMinima = BigDecimal.valueOf(5);
+        var entregas = pedidoService.listarEntregas(
+                taxaMinima,
+                dataInicial.atStartOfDay(zona).toOffsetDateTime(),
+                dataFinal.plusDays(1).atStartOfDay(zona).toOffsetDateTime(),
+                statusFiltro);
+
+        BigDecimal totalTaxas = entregas.stream()
+                .map(pedido::getTaxaEntrega)
+                .filter(java.util.Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        model.addAttribute("entregas", entregas);
+        model.addAttribute("totalTaxas", totalTaxas);
+        model.addAttribute("dataInicial", dataInicial);
+        model.addAttribute("dataFinal", dataFinal);
+        model.addAttribute("statusSelecionado", status);
+        model.addAttribute("statusDisponiveis", statusPedido.values());
+        model.addAttribute("taxaMinima", taxaMinima);
         return "admin/entregas";
     }
 
@@ -120,6 +174,7 @@ public class pedidoController {
             @RequestParam(value = "complemento", required = false) String complemento,
             @RequestParam("valorItens") Double valorItens,
             @RequestParam(value = "carrinhoJson", required = false) String carrinhoJson,
+            @RequestParam(value = "observacoes", required = false) String observacoes,
             Model model) {
 
         model.addAttribute("nomeCliente", nomeCliente);
@@ -131,6 +186,7 @@ public class pedidoController {
         model.addAttribute("complemento", complemento);
         model.addAttribute("valorItens", valorItens);
         model.addAttribute("carrinhoJson", carrinhoJson);
+        model.addAttribute("observacoes", observacoes);
 
         return "pedidos/etapa3";
     }
@@ -153,6 +209,8 @@ public class pedidoController {
             @RequestParam("taxaEntrega") Double taxaEntrega,
             @RequestParam("formaPagamento") String formaPagamento,
             @RequestParam(value = "trocoPara", required = false) String trocoPara,
+            @RequestParam(value = "carrinhoJson", required = false) String carrinhoJson,
+            @RequestParam(value = "observacoes", required = false) String observacoes,
             Model model) {
 
         Double totalGeral = valorItens + taxaEntrega;
@@ -160,6 +218,34 @@ public class pedidoController {
         StringBuilder sb = new StringBuilder();
         sb.append("*MARMITAS SOUSA - RESUMO DO PEDIDO*\n\n");
         sb.append("Olá, *").append(nomeCliente).append("*! Segue o resumo do seu pedido:\n\n");
+
+        if (carrinhoJson != null && !carrinhoJson.isBlank()) {
+            try {
+                JsonNode carrinho = objectMapper.readTree(carrinhoJson);
+                if (carrinho.isArray()) {
+                    sb.append("*Itens do pedido:*\n");
+                    for (JsonNode item : carrinho) {
+                        String nome = item.hasNonNull("nome") && !item.get("nome").asText().isBlank()
+                            ? item.get("nome").asText() : "Produto";
+                        int quantidade = item.path("quantidade").asInt(0);
+                        double preco = item.path("preco").asDouble(0);
+                        sb.append(quantidade).append("x ").append(nome)
+                                .append(" - R$ ")
+                                .append(String.format("%.2f", preco * quantidade))
+                                .append("\n");
+
+                        String observacao = item.hasNonNull("observacao") ? item.get("observacao").asText() : "";
+                        if (!observacao.isBlank()) {
+                            sb.append("   Obs: ").append(observacao).append("\n");
+                        }
+                    }
+                    sb.append("\n");
+                }
+            } catch (Exception ignored) {
+                // O resumo financeiro continua disponível mesmo se o carrinho estiver inválido.
+            }
+        }
+
         sb.append("Subtotal dos Itens: R$ ").append(String.format("%.2f", valorItens)).append("\n");
         sb.append("Taxa de Entrega: R$ ").append(String.format("%.2f", taxaEntrega)).append("\n");
         sb.append("*Total Geral: R$ ").append(String.format("%.2f", totalGeral)).append("*\n\n");
@@ -192,6 +278,8 @@ public class pedidoController {
         model.addAttribute("taxaEntrega", taxaEntrega);
         model.addAttribute("formaPagamento", formaPagamento);
         model.addAttribute("trocoPara", trocoPara);
+        model.addAttribute("carrinhoJson", carrinhoJson);
+        model.addAttribute("observacoes", observacoes);
 
         return "pedidos/etapa4-preview";
     }
@@ -208,6 +296,8 @@ public class pedidoController {
             @RequestParam("taxaEntrega") double taxaEntrega,
             @RequestParam("formaPagamento") String formaPagamento,
             @RequestParam(value = "trocoPara", required = false) String trocoPara,
+            @RequestParam("carrinhoJson") String carrinhoJson,
+            @RequestParam(value = "observacoes", required = false) String observacoes,
             @RequestParam(value = "imprimir", defaultValue = "false") boolean imprimir,
             RedirectAttributes redirectAttributes) {
 
@@ -229,10 +319,9 @@ public class pedidoController {
         pedido novoPedido = new pedido();
         novoPedido.setCliente(cliente);
         novoPedido.setTaxaEntrega(BigDecimal.valueOf(taxaEntrega));
+        novoPedido.setObservacoes(observacoes);
 
-        try {
-            novoPedido.setFormaPagamento(PDV.PDV.model.Enum.formaPagamento.valueOf(formaPagamento.toUpperCase()));
-        } catch (Exception e) {}
+        novoPedido.setFormaPagamento(normalizarFormaPagamento(formaPagamento));
 
         if (trocoPara != null && !trocoPara.trim().isEmpty()) {
             try {
@@ -241,7 +330,13 @@ public class pedidoController {
         }
 
         // Salva o pedido e recupera a instância contendo o ID gerado pelo banco
-        pedido pedidoSalvo = pedidoService.novoPedido(novoPedido);
+        pedido pedidoSalvo;
+        try {
+            pedidoSalvo = pedidoService.novoPedidoComItens(novoPedido, carrinhoJson);
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("erro", e.getMessage());
+            return "redirect:/pedidos";
+        }
 
         // Se a opção de imprimir foi marcada como true, executa o serviço de impressão
         if (imprimir && pedidoSalvo != null && pedidoSalvo.getId() != null) {
@@ -256,6 +351,27 @@ public class pedidoController {
         }
 
         return "redirect:/pedidos/gerenciar";
+    }
+
+    private PDV.PDV.model.Enum.formaPagamento normalizarFormaPagamento(String valor) {
+        if (valor == null) {
+            return null;
+        }
+        String normalizado = valor.trim().toUpperCase()
+                .replace("Á", "A")
+                .replace("É", "E")
+                .replace("Í", "I")
+                .replace("Ó", "O")
+                .replace("Ú", "U");
+        if (normalizado.startsWith("CARTAO")) {
+            return PDV.PDV.model.Enum.formaPagamento.CARTAO;
+        }
+        return switch (normalizado) {
+            case "DINHEIRO" -> PDV.PDV.model.Enum.formaPagamento.DINHEIRO;
+            case "PIX" -> PDV.PDV.model.Enum.formaPagamento.PIX;
+            case "APP" -> PDV.PDV.model.Enum.formaPagamento.APP;
+            default -> throw new IllegalArgumentException("Forma de pagamento inválida");
+        };
     }
 
     @PatchMapping("/{id}/status")
@@ -283,5 +399,16 @@ public class pedidoController {
         }
 
         return "redirect:/pedidos/gerenciar";
+    }
+
+    @GetMapping("/entregas/concluir/{id}")
+    public String concluirEntrega(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            pedidoService.atualizarStatus(id, statusPedido.CONCLUIDO);
+            redirectAttributes.addFlashAttribute("sucesso", "Entrega concluída com sucesso!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("erro", "Não foi possível concluir a entrega: " + e.getMessage());
+        }
+        return "redirect:/pedidos/entregas";
     }
 }

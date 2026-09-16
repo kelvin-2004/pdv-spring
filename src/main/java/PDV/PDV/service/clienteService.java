@@ -3,6 +3,8 @@ package PDV.PDV.service;
 import PDV.PDV.model.clientes;
 import PDV.PDV.repository.clienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,11 +25,11 @@ public class clienteService {
     }
 
     public clientes cadastrarCliente(clientes cliente) {
-        // Se for um novo cadastro (ID nulo) ou se quisermos validar duplicidade
-        if (cliente.getId() == null && cliente.getCelular() != null) {
+        if (cliente.getCelular() != null && !cliente.getCelular().isBlank()) {
             Optional<clientes> clienteExistente = clienteRepo.findByCelular(cliente.getCelular());
 
-            if (clienteExistente.isPresent()) {
+            if (clienteExistente.isPresent()
+                    && !clienteExistente.get().getId().equals(cliente.getId())) {
                 throw new RuntimeException("Cliente já cadastrado com este número de celular.");
             }
         }
@@ -37,6 +39,11 @@ public class clienteService {
 
     public List<clientes> listarTodos() {
         return clienteRepo.findAll();
+    }
+
+    public Page<clientes> pesquisar(String termo, int pagina) {
+        String termoNormalizado = termo == null ? "" : termo.trim();
+        return clienteRepo.pesquisar(termoNormalizado, PageRequest.of(Math.max(pagina, 0), 5));
     }
 
     public Optional<clientes> buscarCelular(String celular) {

@@ -19,9 +19,14 @@
         private clienteService ClienteService;
 
         @GetMapping
-        public String listarClientes(Model model) {
-            model.addAttribute("clientes", ClienteService.listarTodos());
+        public String listarClientes(
+                @RequestParam(value = "q", required = false, defaultValue = "") String termo,
+                @RequestParam(value = "pagina", required = false, defaultValue = "0") int pagina,
+                Model model) {
+            var clientes = ClienteService.pesquisar(termo, pagina);
+            model.addAttribute("clientes", clientes);
             model.addAttribute("novoCliente", new clientes());
+            model.addAttribute("termoBusca", termo);
             return "clientes/lista"; // Aponta para src/main/resources/templates/clientes/lista.html
         }
 

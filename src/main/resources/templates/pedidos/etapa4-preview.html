@@ -189,6 +189,7 @@
         <div class="d-flex flex-wrap gap-2">
             <!-- Registrar sem Imprimir -->
             <form th:action="@{/pedidos/salvar}" method="post" class="m-0">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <input type="hidden" name="nomeCliente" th:value="${nomeCliente}">
                 <input type="hidden" name="telefone" th:value="${telefone}">
                 <input type="hidden" name="cep" th:value="${cep}">
@@ -199,6 +200,7 @@
                 <input type="hidden" name="taxaEntrega" th:value="${taxaEntrega}">
                 <input type="hidden" name="formaPagamento" th:value="${formaPagamento}" id="inputFormaPagamento">
                 <input type="hidden" name="trocoPara" th:value="${trocoPara}">
+                <input type="hidden" name="carrinhoJson" th:value="${carrinhoJson}">
                 <input type="hidden" name="observacoes" th:value="${observacoes}">
                 <input type="hidden" name="imprimir" value="false">
 
@@ -209,6 +211,7 @@
 
             <!-- Registrar e Imprimir -->
             <form th:action="@{/pedidos/salvar}" method="post" class="m-0">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <input type="hidden" name="nomeCliente" th:value="${nomeCliente}">
                 <input type="hidden" name="telefone" th:value="${telefone}">
                 <input type="hidden" name="cep" th:value="${cep}">
@@ -219,6 +222,7 @@
                 <input type="hidden" name="taxaEntrega" th:value="${taxaEntrega}">
                 <input type="hidden" name="formaPagamento" th:value="${formaPagamento}">
                 <input type="hidden" name="trocoPara" th:value="${trocoPara}">
+                <input type="hidden" name="carrinhoJson" th:value="${carrinhoJson}">
                 <input type="hidden" name="observacoes" th:value="${observacoes}">
                 <input type="hidden" name="imprimir" value="true">
 
