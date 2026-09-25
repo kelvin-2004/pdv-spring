@@ -66,7 +66,14 @@ public class ImpressaoService {
         imprimirTexto(sb.toString(), nomeImpressora);
     }
 
+    @Transactional
     public void imprimirPedido(Long id) throws Exception {
+        if (isModoPonte()) {
+            // Em modo ponte, não imprimimos aqui: a ponte (notebook) busca e imprime.
+            // Reenfileira o pedido marcando impresso=false para a ponte pegar na próxima consulta.
+            pedidoRepo.reverterImpressao(id);
+            return;
+        }
         imprimirTexto(montarTextoPedido(id), nomeImpressoraEfetivo());
     }
 
