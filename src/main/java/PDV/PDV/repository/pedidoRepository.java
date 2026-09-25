@@ -5,6 +5,7 @@ import PDV.PDV.dto.ResumoProdutoVenda;
 import PDV.PDV.model.clientes;
 import PDV.PDV.model.pedido;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface pedidoRepository extends JpaRepository<pedido, Long> {
@@ -40,6 +42,30 @@ public interface pedidoRepository extends JpaRepository<pedido, Long> {
     BigDecimal somarTotalTaxasEntrega();
 
     long countByCliente(clientes cliente);
+
+    List<pedido> findByClienteOrderByDataHoraPedidoDesc(clientes cliente);
+
+    List<pedido> findByClienteAndStatusPedidoOrderByDataHoraPedidoDesc(clientes cliente, statusPedido status);
+
+    List<pedido> findByStatusPedidoAndDataExpiracaoPagamentoBefore(statusPedido status, OffsetDateTime agora);
+
+    Optional<pedido> findByPagamentoMpId(Long pagamentoMpId);
+
+    @Modifying
+    @Query("UPDATE pedido p SET p.impresso = true WHERE p.id = :id AND (p.impresso = false OR p.impresso IS NULL)")
+    int marcarComoImpresso(@Param("id") Long id);
+
+    @Modifying
+    @Query("UPDATE pedido p SET p.impresso = false WHERE p.id = :id")
+    int reverterImpressao(@Param("id") Long id);
+
+    @Query("""
+        SELECT p FROM pedido p
+        WHERE p.statusPedido = PDV.PDV.model.Enum.statusPedido.PREPARANDO
+          AND (p.impresso = false OR p.impresso IS NULL)
+        ORDER BY p.dataHoraPedido ASC
+        """)
+    List<pedido> findPendentesImpressao();
 
         @Query("""
             SELECT new PDV.PDV.dto.ResumoProdutoVenda(i.produto.nome, SUM(i.quantidade), SUM(i.subtotal))

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Marmitas Sousa | Gerenciar Pedidos</title>
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
 
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%235c3a21' d='M256 32c125.7 0 228 102.3 228 228s-102.3 228-228 228S28 385.7 28 260 130.3 32 256 32zm0 64c-92.8 0-164 71.2-164 164s71.2 164 164 164 164-71.2 164-164-71.2-164-164-164z'/%3E%3Cpath fill='%23e0a838' d='M176 220h160v64H176z'/%3E%3C/svg%3E">
 
@@ -26,22 +28,36 @@
             color: #2c221e;
         }
 
-        .navbar-custom {
-            background: linear-gradient(135deg, #5c3a21 0%, #432a18 100%);
-            box-shadow: 0 4px 15px rgba(92, 58, 33, 0.12);
+        /* ===== Layout com menu lateral ===== */
+        .app-wrapper {
+            display: flex;
+            min-height: 100vh;
         }
 
-        .navbar-custom .navbar-brand, .navbar-custom .nav-link {
-            color: #fcfbfa;
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 260px;
+            z-index: 1040;
+            background: linear-gradient(180deg, #432a18 0%, #2e1d10 100%);
+            color: #f5efe8;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s ease, width 0.2s ease;
+            box-shadow: 2px 0 14px rgba(0, 0, 0, 0.15);
         }
 
-        .navbar-custom .nav-link:hover, .navbar-custom .nav-link.active {
-            color: #ffda79 !important;
-            background-color: rgba(255, 255, 255, 0.08);
-            border-radius: 6px;
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 1.15rem 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .logo-header {
+        .sidebar-brand img {
             height: 42px;
             width: 42px;
             object-fit: cover;
@@ -49,7 +65,136 @@
             border: 2px solid var(--cor-secundaria);
         }
 
-        /* Layout Kanban Columns */
+        .sidebar-brand .nome {
+            font-weight: 700;
+            font-size: 0.95rem;
+            line-height: 1.1;
+            color: #fff;
+        }
+
+        .sidebar-nav {
+            padding: 0.85rem 0.75rem;
+            overflow-y: auto;
+        }
+
+        .sidebar-nav .nav-label {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.45);
+            padding: 0.35rem 0.75rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0.55rem 0.75rem;
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.82);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 2px;
+            transition: all 0.15s ease;
+        }
+
+        .sidebar-nav a i {
+            width: 18px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .sidebar-nav a:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .sidebar-nav a.active {
+            background-color: var(--cor-secundaria);
+            color: var(--cor-primaria);
+            font-weight: 700;
+        }
+
+        .sidebar-config {
+            margin-top: auto;
+            padding: 1rem 1.15rem 1.25rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            background-color: rgba(0, 0, 0, 0.18);
+        }
+
+        .sidebar-config .titulo {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #ffda79;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+
+        .sidebar-config .desc {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 0.55rem;
+        }
+
+        .sidebar-config .input-group {
+            margin-bottom: 0.3rem;
+        }
+
+        .sidebar-config .hint {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.45);
+        }
+
+        .main-area {
+            flex-grow: 1;
+            margin-left: 260px;
+            min-width: 0;
+            padding: 1.25rem 1.5rem 2.5rem;
+            transition: margin-left 0.2s ease;
+        }
+
+        /* ===== Menu lateral recolhido (modo ícone) ===== */
+        .app-wrapper.collapsed .sidebar { width: 70px; }
+        .app-wrapper.collapsed .sidebar-brand { justify-content: center; padding-left: 0.5rem; padding-right: 0.5rem; }
+        .app-wrapper.collapsed .sidebar-brand .nome,
+        .app-wrapper.collapsed .sidebar-brand small { display: none; }
+        .app-wrapper.collapsed .sidebar-nav .nav-label { display: none; }
+        .app-wrapper.collapsed .sidebar-nav a { justify-content: center; padding: 0.6rem 0.5rem; }
+        .app-wrapper.collapsed .sidebar-nav a .link-text { display: none; }
+        .app-wrapper.collapsed .sidebar-config { display: none; }
+        .app-wrapper.collapsed .main-area { margin-left: 70px; }
+
+        @media (max-width: 991.98px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.show { transform: translateX(0); }
+            .main-area { margin-left: 0; }
+        }
+
+        /* ===== Topbar ===== */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .relogio-badge {
+            background-color: #fff;
+            border: 1px solid var(--borda-suave);
+            color: var(--cor-primaria);
+            font-weight: 600;
+            font-size: 0.8rem;
+            padding: 0.45rem 0.9rem;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        /* ===== Layout Kanban Columns ===== */
         .kanban-column {
             background-color: var(--cor-card);
             border: 1px solid var(--borda-suave);
@@ -58,13 +203,11 @@
             flex-direction: column;
             height: 52vh;
             overflow: hidden;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
             transition: all 0.2s ease;
         }
 
-        .kanban-column-inferior {
-            height: 22vh;
-        }
+        .kanban-column-inferior { height: 22vh; }
 
         .kanban-destaque {
             border: 2px solid #e0a838;
@@ -76,9 +219,7 @@
             overflow: hidden;
         }
 
-        .kanban-column.minimized .kanban-body {
-            display: none;
-        }
+        .kanban-column.minimized .kanban-body { display: none; }
 
         .kanban-header {
             padding: 0.8rem 1rem;
@@ -95,9 +236,7 @@
             align-items: center;
         }
 
-        .kanban-destaque .kanban-header {
-            background-color: #fef3d6;
-        }
+        .kanban-destaque .kanban-header { background-color: #fef3d6; }
 
         .kanban-body {
             padding: 0.75rem;
@@ -113,7 +252,7 @@
             padding: 0.75rem;
             margin-bottom: 0.6rem;
             transition: all 0.2s ease;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.01);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01);
             position: relative;
         }
 
@@ -130,9 +269,21 @@
             box-shadow: 0 4px 12px rgba(217, 130, 43, 0.15);
         }
 
-        .card-conteudo-clicavel {
-            cursor: pointer;
+        .card-conteudo-clicavel { cursor: pointer; }
+
+        /* Destaque "pagar na entrega" no cartão do pedido */
+        .badge-naentrega {
+            background-color: #c0392b;
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            border-radius: 6px;
+            padding: 0.28rem 0.5rem;
+            margin-bottom: 0.45rem;
+            text-align: center;
         }
+        .badge-naentrega.maquininha { background-color: #0d6efd; }
 
         .card-acoes-status {
             border-top: 1px dashed var(--borda-suave);
@@ -150,7 +301,26 @@
             margin-top: 1rem;
         }
 
-        /* Painel Lateral de Detalhes */
+        /* ===== Contagem regressiva para despachar ===== */
+        .prazo-countdown {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.2rem 0.55rem;
+            border-radius: 999px;
+        }
+
+        .prazo-ok {
+            background-color: #eaf7ee;
+            color: #1e7a34;
+        }
+
+        .prazo-atrasado {
+            background-color: #fdecea;
+            color: #c0392b;
+        }
+
+        /* ===== Painel Lateral de Detalhes ===== */
         .detalhes-sidebar {
             background-color: var(--cor-card);
             border-radius: 14px;
@@ -158,7 +328,7 @@
             height: 76vh;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
             overflow: hidden;
             position: sticky;
             top: 1rem;
@@ -194,286 +364,481 @@
             padding: 0.5rem 0.75rem;
             transition: all 0.2s;
         }
+
+        /* ===== Chat (loja <-> cliente) ===== */
+        .chat-modal-mensagens {
+            height: 340px; overflow-y: auto; padding: 12px;
+            background: #faf8f5; display: flex; flex-direction: column; gap: 8px;
+            border-radius: 10px; border: 1px solid var(--borda-suave);
+        }
+        .chat-modal-balao { max-width: 78%; padding: 8px 12px; border-radius: 14px; font-size: 0.88rem; line-height: 1.35; word-wrap: break-word; }
+        .chat-modal-loja { align-self: flex-end; background: var(--cor-primaria); color: #fff; border-bottom-right-radius: 4px; }
+        .chat-modal-cliente { align-self: flex-start; background: #fff; border: 1px solid var(--borda-suave); color: #2c221e; border-bottom-left-radius: 4px; }
+        .chat-modal-hora { display: block; font-size: 0.66rem; opacity: .6; margin-top: 3px; }
+        .chat-modal-loja .chat-modal-hora { text-align: right; }
+        .chat-modal-vazio { align-self: center; margin: auto; color: #9e948c; font-size: 0.85rem; text-align: center; }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark navbar-custom mb-4 py-2">
-    <div class="container-fluid px-4">
-        <a class="navbar-brand d-flex align-items-center gap-2" th:href="@{/pedidos}">
-            <img th:src="@{/img/logo.png}" alt="Marmitas Sousa" class="logo-header">
-            <span class="fs-6 fw-semibold">Marmitas Sousa</span>
-        </a>
-        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-            <ul class="navbar-nav gap-1">
-                <li class="nav-item"><a class="nav-link px-3 py-2" th:href="@{/pedidos}"><i class="fa-solid fa-plus me-1"></i> Novo Pedido</a></li>
-                <li class="nav-item"><a class="nav-link px-3 py-2 active" th:href="@{/pedidos/gerenciar}"><i class="fa-solid fa-list-check me-1"></i> Gerenciar Pedidos</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
+<div class="app-wrapper" id="app-wrapper">
 
-<div class="container-fluid px-4 pb-5">
-    <div class="row align-items-center mb-3">
-        <div class="col-md-7">
-            <h4 class="fw-bold mb-1" style="color: var(--cor-primaria);">Painel de Pedidos</h4>
-            <p class="text-muted small mb-0">Acompanhe o andamento da cozinha e das entregas em tempo real</p>
+    <!-- ===== Menu lateral ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <img th:src="@{/img/logo.png}" alt="Marmitas Sousa">
+            <div>
+                <div class="nome">Marmitas Sousa</div>
+                <small style="color: #ffda79; font-size: 0.7rem;">Gestor de Pedidos</small>
+            </div>
         </div>
-        <div class="col-md-5 mt-2 mt-md-0">
+
+        <nav class="sidebar-nav">
+            <div class="nav-label">Operação</div>
+            <a th:href="@{/pedidos}"><i class="fa-solid fa-cash-register"></i> <span class="link-text">Novo Pedido</span></a>
+            <a class="active" th:href="@{/pedidos/gerenciar}"><i class="fa-solid fa-list-check"></i> <span class="link-text">Gerenciar Pedidos</span></a>
+            <a th:href="@{/pedidos/entregas}"><i class="fa-solid fa-motorcycle"></i> <span class="link-text">Entregas</span></a>
+
+            <div class="nav-label mt-3">Catálogo & Clientes</div>
+            <a th:href="@{/produtos}"><i class="fa-solid fa-utensils"></i> <span class="link-text">Cardápio</span></a>
+            <a th:href="@{/clientes}"><i class="fa-solid fa-users"></i> <span class="link-text">Clientes</span></a>
+
+            <div class="nav-label mt-3">Administração</div>
+            <a th:href="@{/admin/dashboard}"><i class="fa-solid fa-chart-line"></i> <span class="link-text">Dashboard</span></a>
+            <a th:href="@{/admin/area-entrega}"><i class="fa-solid fa-map-location-dot"></i> <span class="link-text">Área de Entrega</span></a>
+            <a th:href="@{/admin/cupons}"><i class="fa-solid fa-ticket"></i> <span class="link-text">Cupons</span></a>
+            <a th:href="@{/admin/configuracoes}"><i class="fa-solid fa-gear"></i> <span class="link-text">Configurações</span></a>
+        </nav>
+
+        <!-- Configuração global de tempo de preparo -->
+        <div class="sidebar-config">
+            <div class="titulo"><i class="fa-solid fa-stopwatch me-1"></i> Tempo de preparo padrão</div>
+            <div class="desc">Usado automaticamente nos próximos pedidos.</div>
             <div class="input-group input-group-sm">
-                <span class="input-group-text bg-white border-end-0 text-muted ps-3 rounded-start-pill"><i class="fa-solid fa-search"></i></span>
-                <input type="text" id="filtroPedidos" class="form-control border-start-0 ps-0 rounded-end-pill" placeholder="Buscar por cliente ou número..." onkeyup="filtrarCards()">
+                <input type="number" min="1" max="180" class="form-control" id="inputPreparoPadrao"
+                       th:value="${tempoPreparoPadrao}" placeholder="Min">
+                <button class="btn btn-warning" type="button" onclick="salvarPreparoPadrao()" title="Salvar padrão">
+                    <i class="fa-solid fa-check"></i>
+                </button>
             </div>
+            <div class="hint">minutos (1 a 180)</div>
+        </div>
+    </aside>
+
+    <!-- ===== Conteúdo principal ===== -->
+    <div class="main-area">
+
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-light border d-lg-none" type="button"
+                        onclick="document.getElementById('sidebar').classList.toggle('show')">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <button class="btn btn-light border d-none d-lg-inline-flex align-items-center justify-content-center" type="button"
+                        id="btnRecolherMenu" onclick="alternarMenuLateral()" title="Recolher/expandir menu">
+                    <i class="fa-solid fa-angles-left"></i>
+                </button>
+                <div>
+                    <h4 class="fw-bold mb-0" style="color: var(--cor-primaria);">Painel de Pedidos</h4>
+                    <p class="text-muted small mb-0">Acompanhe o andamento da cozinha e das entregas em tempo real</p>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <button class="btn btn-light border rounded-circle d-flex align-items-center justify-content-center" type="button"
+                        id="btnSom" onclick="alternarSom()" title="Som das notificações ligado" style="width: 38px; height: 38px;">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>
+                <div class="dropdown">
+                    <button class="btn btn-light border rounded-circle d-flex align-items-center justify-content-center position-relative" type="button"
+                            id="btnNotificacoes" data-bs-toggle="dropdown" aria-expanded="false" title="Notificações" style="width: 38px; height: 38px;">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="badgeNotificacoes" style="display: none;">0</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end shadow" id="menuNotificacoes"
+                         style="width: 340px; max-width: 92vw; max-height: 430px; overflow-y: auto; font-size: 0.85rem;">
+                        <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold text-dark"><i class="fa-regular fa-bell me-1"></i> Notificações</span>
+                            <button type="button" class="btn btn-sm btn-link text-decoration-none p-0" onclick="limparNotificacoes()">Limpar</button>
+                        </div>
+                        <div id="listaNotificacoes">
+                            <div class="px-3 py-4 text-center text-muted small nenhuma-notificacao">Nenhuma notificação ainda.</div>
+                        </div>
+                    </div>
+                </div>
+                <span class="relogio-badge"><i class="fa-regular fa-clock me-1"></i><span id="relogio">—</span></span>
+                <div class="input-group input-group-sm" style="max-width: 260px;">
+                    <span class="input-group-text bg-white border-end-0 text-muted ps-3 rounded-start-pill"><i class="fa-solid fa-search"></i></span>
+                    <input type="text" id="filtroPedidos" class="form-control border-start-0 ps-0 rounded-end-pill"
+                           placeholder="Buscar por cliente ou número..." onkeyup="filtrarCards()">
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensagens de sucesso / erro -->
+        <div th:if="${sucesso}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fa-solid fa-circle-check me-1"></i> <span th:text="${sucesso}">Sucesso</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+        </div>
+        <div th:if="${erro}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-1"></i> <span th:text="${erro}">Erro</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+        </div>
+
+        <!-- Layout dinâmico -->
+        <div class="row g-3" id="mainLayoutRow">
+
+            <!-- Bloco Kanban -->
+            <div class="col-lg-12" id="kanbanContainerCol">
+                <div class="row g-2" th:fragment="quadro">
+
+                    <!-- 1. PREPARANDO -->
+                    <div class="col-lg-4 col-md-4 mb-2">
+                        <div class="kanban-column kanban-destaque" id="col-PREPARANDO">
+                            <div class="kanban-header" onclick="toggleColuna('col-PREPARANDO')">
+                                <span class="text-truncate text-dark"><i class="fa-solid fa-fire-burner text-warning me-1"></i> Preparando</span>
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="badge bg-warning text-dark rounded-pill px-2" th:text="${preparando != null ? preparando.size() : 0}">0</span>
+                                    <i class="fa-solid fa-chevron-down toggle-icon small text-muted"></i>
+                                </div>
+                            </div>
+                            <div class="kanban-body">
+                                <div th:if="${preparando == null || preparando.empty}" class="empty-msg">Nenhum pedido</div>
+                                <div class="pedido-card" th:each="p : ${preparando}" data-status="PREPARANDO"
+                                     th:attr="data-id=${p.id},data-troco=${p.trocoPara != null ? p.trocoPara : ''},data-naentrega=${p.pagamentoNaEntrega}">
+                                    <div class="badge-naentrega" th:if="${p.pagamentoNaEntrega}"
+                                         th:classappend="${p.formaPagamento == T(PDV.PDV.model.Enum.formaPagamento).CARTAO} ? ' maquininha' : ''">
+                                        <i class="fa-solid fa-hand-holding-dollar me-1"></i>
+                                        <span th:text="${p.formaPagamento == T(PDV.PDV.model.Enum.formaPagamento).CARTAO} ? 'COBRAR VIA MAQUININHA' : 'COBRAR EM DINHEIRO'"></span>
+                                        <span th:if="${p.trocoPara != null}" th:text="${' · troco p/ R$ ' + #numbers.formatDecimal(p.trocoPara, 1, 2, 'COMMA')}"></span>
+                                    </div>
+                                    <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.cliente != null ? p.cliente.nome : 'Não informado'}]], [[${p.cliente != null ? p.cliente.celular : ''}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]], [[${p.tempoPreparoMinutos}]], [[${p.prazoPreparoEpochMillis}]])">
+                                        <div class="d-flex justify-content-between fw-bold mb-1 small">
+                                            <span>#<span th:text="${p.id}"></span></span>
+                                            <span class="text-success">R$ <span th:text="${p.valorTotal}"></span></span>
+                                        </div>
+                                        <div class="small text-truncate text-secondary fw-medium">
+                                            <span th:text="${p.cliente != null ? p.cliente.nome : 'Cliente'}"></span>
+                                        </div>
+                                        <div class="mt-2">
+                                            <span class="prazo-countdown" th:attr="data-prazo=${p.prazoPreparoEpochMillis}">—</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-acoes-status">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 me-auto" style="font-size: 0.7rem;"
+                                                th:attr="data-id=${p.id}" onclick="abrirChat(this)" title="Chat com o cliente">
+                                            <i class="fa-solid fa-comment-dots me-1"></i>Chat
+                                            <span class="badge rounded-pill bg-danger ms-1 chat-badge-naolidas" th:attr="data-id=${p.id}" style="display:none;">0</span>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.7rem;" th:onclick="alterarStatus([[${p.id}]], 'AGUARDANDO_ENTREGADOR')" title="Avançar para Pronto">
+                                            Pronto <i class="fa-solid fa-arrow-right ms-1"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. PRONTO -->
+                    <div class="col-lg-4 col-md-4 mb-2">
+                        <div class="kanban-column kanban-destaque" id="col-AGUARDANDO_ENTREGADOR">
+                            <div class="kanban-header" onclick="toggleColuna('col-AGUARDANDO_ENTREGADOR')">
+                                <span class="text-truncate text-dark"><i class="fa-solid fa-box-open text-primary me-1"></i> Pronto</span>
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="badge bg-primary text-white rounded-pill px-2" th:text="${aguardandoEntregador != null ? aguardandoEntregador.size() : 0}">0</span>
+                                    <i class="fa-solid fa-chevron-down toggle-icon small text-muted"></i>
+                                </div>
+                            </div>
+                            <div class="kanban-body">
+                                <div th:if="${aguardandoEntregador == null || aguardandoEntregador.empty}" class="empty-msg">Nenhum pedido</div>
+                                <div class="pedido-card" th:each="p : ${aguardandoEntregador}" data-status="AGUARDANDO_ENTREGADOR"
+                                     th:attr="data-id=${p.id},data-troco=${p.trocoPara != null ? p.trocoPara : ''},data-naentrega=${p.pagamentoNaEntrega}">
+                                    <div class="badge-naentrega" th:if="${p.pagamentoNaEntrega}"
+                                         th:classappend="${p.formaPagamento == T(PDV.PDV.model.Enum.formaPagamento).CARTAO} ? ' maquininha' : ''">
+                                        <i class="fa-solid fa-hand-holding-dollar me-1"></i>
+                                        <span th:text="${p.formaPagamento == T(PDV.PDV.model.Enum.formaPagamento).CARTAO} ? 'COBRAR VIA MAQUININHA' : 'COBRAR EM DINHEIRO'"></span>
+                                        <span th:if="${p.trocoPara != null}" th:text="${' · troco p/ R$ ' + #numbers.formatDecimal(p.trocoPara, 1, 2, 'COMMA')}"></span>
+                                    </div>
+                                    <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.cliente != null ? p.cliente.nome : 'Não informado'}]], [[${p.cliente != null ? p.cliente.celular : ''}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]], [[${p.tempoPreparoMinutos}]], [[${p.prazoPreparoEpochMillis}]])">
+                                        <div class="d-flex justify-content-between fw-bold mb-1 small">
+                                            <span>#<span th:text="${p.id}"></span></span>
+                                            <span class="text-success">R$ <span th:text="${p.valorTotal}"></span></span>
+                                        </div>
+                                        <div class="small text-truncate text-secondary fw-medium">
+                                            <span th:text="${p.cliente != null ? p.cliente.nome : 'Cliente'}"></span>
+                                        </div>
+                                    </div>
+                                    <div class="card-acoes-status justify-content-between">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 me-auto" style="font-size: 0.7rem;"
+                                                th:attr="data-id=${p.id}" onclick="abrirChat(this)" title="Chat com o cliente">
+                                            <i class="fa-solid fa-comment-dots me-1"></i>Chat
+                                            <span class="badge rounded-pill bg-danger ms-1 chat-badge-naolidas" th:attr="data-id=${p.id}" style="display:none;">0</span>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.7rem;" th:onclick="alterarStatus([[${p.id}]], 'PREPARANDO')" title="Voltar para Preparando">
+                                            <i class="fa-solid fa-arrow-left me-1"></i> Preparando
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-info py-0 px-2 text-dark" style="font-size: 0.7rem;" th:onclick="alterarStatus([[${p.id}]], 'A_CAMINHO')" title="Despachar pedido">
+                                            Despachar <i class="fa-solid fa-arrow-right ms-1"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. DESPACHADO -->
+                    <div class="col-lg-4 col-md-4 mb-2">
+                        <div class="kanban-column kanban-destaque" id="col-A_CAMINHO">
+                            <div class="kanban-header" onclick="toggleColuna('col-A_CAMINHO')">
+                                <span class="text-truncate text-dark"><i class="fa-solid fa-motorcycle text-info me-1"></i> Despachado</span>
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="badge bg-info text-dark rounded-pill px-2" th:text="${aCaminho != null ? aCaminho.size() : 0}">0</span>
+                                    <i class="fa-solid fa-chevron-down toggle-icon small text-muted"></i>
+                                </div>
+                            </div>
+                            <div class="kanban-body">
+                                <div th:if="${aCaminho == null || aCaminho.empty}" class="empty-msg">Nenhum pedido</div>
+                                <div class="pedido-card" th:each="p : ${aCaminho}" data-status="A_CAMINHO"
+                                     th:attr="data-id=${p.id},data-troco=${p.trocoPara != null ? p.trocoPara : ''},data-naentrega=${p.pagamentoNaEntrega}">
+                                    <div class="badge-naentrega" th:if="${p.pagamentoNaEntrega}"
+                                         th:classappend="${p.formaPagamento == T(PDV.PDV.model.Enum.formaPagamento).CARTAO} ? ' maquininha' : ''">
+                                        <i class="fa-solid fa-hand-holding-dollar me-1"></i>
+                                        <span th:text="${p.formaPagamento == T(PDV.PDV.model.Enum.formaPagamento).CARTAO} ? 'COBRAR VIA MAQUININHA' : 'COBRAR EM DINHEIRO'"></span>
+                                        <span th:if="${p.trocoPara != null}" th:text="${' · troco p/ R$ ' + #numbers.formatDecimal(p.trocoPara, 1, 2, 'COMMA')}"></span>
+                                    </div>
+                                    <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.cliente != null ? p.cliente.nome : 'Não informado'}]], [[${p.cliente != null ? p.cliente.celular : ''}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]], [[${p.tempoPreparoMinutos}]], [[${p.prazoPreparoEpochMillis}]])">
+                                        <div class="d-flex justify-content-between fw-bold mb-1 small">
+                                            <span>#<span th:text="${p.id}"></span></span>
+                                            <span class="text-success">R$ <span th:text="${p.valorTotal}"></span></span>
+                                        </div>
+                                        <div class="small text-truncate text-secondary fw-medium">
+                                            <span th:text="${p.cliente != null ? p.cliente.nome : 'Cliente'}"></span>
+                                        </div>
+                                    </div>
+                                    <div class="card-acoes-status justify-content-between">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 me-auto" style="font-size: 0.7rem;"
+                                                th:attr="data-id=${p.id}" onclick="abrirChat(this)" title="Chat com o cliente">
+                                            <i class="fa-solid fa-comment-dots me-1"></i>Chat
+                                            <span class="badge rounded-pill bg-danger ms-1 chat-badge-naolidas" th:attr="data-id=${p.id}" style="display:none;">0</span>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.7rem;" th:onclick="alterarStatus([[${p.id}]], 'AGUARDANDO_ENTREGADOR')" title="Voltar para Pronto">
+                                            <i class="fa-solid fa-arrow-left me-1"></i> Pronto
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-success py-0 px-2" style="font-size: 0.7rem;" th:onclick="alterarStatus([[${p.id}]], 'CONCLUIDO')" title="Concluir pedido">
+                                            Concluir <i class="fa-solid fa-check ms-1"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. CONCLUÍDO -->
+                    <div class="col-lg-6 col-md-6">
+                        <div class="kanban-column kanban-column-inferior minimized" id="col-CONCLUIDO">
+                            <div class="kanban-header" onclick="toggleColuna('col-CONCLUIDO')">
+                                <span class="text-truncate text-dark"><i class="fa-solid fa-check text-success me-1"></i> Concluídos</span>
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="badge bg-success text-white rounded-pill px-2" th:text="${concluidos != null ? concluidos.size() : 0}">0</span>
+                                    <i class="fa-solid fa-chevron-up toggle-icon small text-muted"></i>
+                                </div>
+                            </div>
+                            <div class="kanban-body">
+                                <div th:if="${concluidos == null || concluidos.empty}" class="empty-msg">Nenhum</div>
+                                <div class="pedido-card" th:each="p : ${concluidos}" data-status="CONCLUIDO"
+                                     th:attr="data-id=${p.id},data-troco=${p.trocoPara != null ? p.trocoPara : ''},data-naentrega=${p.pagamentoNaEntrega}">
+                                    <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.cliente != null ? p.cliente.nome : 'Não informado'}]], [[${p.cliente != null ? p.cliente.celular : ''}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]], [[${p.tempoPreparoMinutos}]], [[${p.prazoPreparoEpochMillis}]])">
+                                        <div class="d-flex justify-content-between fw-bold mb-1 small">
+                                            <span>#<span th:text="${p.id}"></span></span>
+                                            <span class="text-success">R$ <span th:text="${p.valorTotal}"></span></span>
+                                        </div>
+                                        <div class="small text-truncate text-secondary fw-medium">
+                                            <span th:text="${p.cliente != null ? p.cliente.nome : 'Cliente'}"></span>
+                                        </div>
+                                    </div>
+                                    <div class="card-acoes-status">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.7rem;"
+                                                th:attr="data-id=${p.id}" onclick="abrirChat(this)" title="Chat com o cliente">
+                                            <i class="fa-solid fa-comment-dots me-1"></i>Chat
+                                            <span class="badge rounded-pill bg-danger ms-1 chat-badge-naolidas" th:attr="data-id=${p.id}" style="display:none;">0</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. CANCELADO -->
+                    <div class="col-lg-6 col-md-6">
+                        <div class="kanban-column kanban-column-inferior minimized" id="col-CANCELADO">
+                            <div class="kanban-header" onclick="toggleColuna('col-CANCELADO')">
+                                <span class="text-truncate text-dark"><i class="fa-solid fa-ban text-danger me-1"></i> Cancelados</span>
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="badge bg-danger text-white rounded-pill px-2" th:text="${cancelados != null ? cancelados.size() : 0}">0</span>
+                                    <i class="fa-solid fa-chevron-up toggle-icon small text-muted"></i>
+                                </div>
+                            </div>
+                            <div class="kanban-body">
+                                <div th:if="${cancelados == null || cancelados.empty}" class="empty-msg">Nenhum</div>
+                                <div class="pedido-card" th:each="p : ${cancelados}" data-status="CANCELADO"
+                                     th:attr="data-id=${p.id},data-troco=${p.trocoPara != null ? p.trocoPara : ''},data-naentrega=${p.pagamentoNaEntrega}">
+                                    <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.cliente != null ? p.cliente.nome : 'Não informado'}]], [[${p.cliente != null ? p.cliente.celular : ''}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]], [[${p.tempoPreparoMinutos}]], [[${p.prazoPreparoEpochMillis}]])">
+                                        <div class="d-flex justify-content-between fw-bold mb-1 small">
+                                            <span>#<span th:text="${p.id}"></span></span>
+                                            <span class="text-success">R$ <span th:text="${p.valorTotal}"></span></span>
+                                        </div>
+                                        <div class="small text-truncate text-secondary fw-medium">
+                                            <span th:text="${p.cliente != null ? p.cliente.nome : 'Cliente'}"></span>
+                                        </div>
+                                    </div>
+                                    <div class="card-acoes-status">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.7rem;"
+                                                th:attr="data-id=${p.id}" onclick="abrirChat(this)" title="Chat com o cliente">
+                                            <i class="fa-solid fa-comment-dots me-1"></i>Chat
+                                            <span class="badge rounded-pill bg-danger ms-1 chat-badge-naolidas" th:attr="data-id=${p.id}" style="display:none;">0</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Painel Lateral de Detalhes -->
+            <div class="col-lg-3 d-none" id="detalhesSidebarCol">
+                <div class="detalhes-sidebar">
+                    <div class="detalhes-header d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fw-semibold"><i class="fa-solid fa-circle-info me-1 text-secondary"></i> Descrição</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light border text-secondary py-0 px-2 shadow-none dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Opções do pedido">
+                                    <i class="fa-solid fa-gear"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 0.85rem;">
+                                    <li>
+                                        <a class="dropdown-item" id="menuEditarPedido" href="#" onclick="editarPedido()">
+                                            <i class="fa-solid fa-pen me-2"></i> Editar Pedido
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item text-danger fw-semibold" id="menuCancelarPedido" href="#" onclick="confirmarCancelamento()">
+                                            <i class="fa-solid fa-ban me-2"></i> Cancelar Pedido
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <button type="button" class="btn-close small text-muted shadow-none" onclick="fecharDetalhes()" aria-label="Fechar"></button>
+                        </div>
+                    </div>
+
+                    <div class="detalhes-body" id="painelPreenchido">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge bg-light text-secondary border">Pedido #<span id="mId"></span></span>
+                                <span id="tagNumeroPedido" class="badge bg-warning text-dark fw-semibold" style="display: none;">
+                                    <i class="fa-solid fa-star me-1"></i> <span id="mTextoNumeroPedido"></span>
+                                </span>
+                            </div>
+                            <h5 class="fw-bold text-dark mb-1" id="mNome"></h5>
+                            <p class="mb-0 text-muted small"><i class="fa-solid fa-phone me-1"></i> <span id="mCelular"></span></p>
+                        </div>
+
+                        <!-- Prazo para despachar (apenas pedidos em preparação) -->
+                        <div class="info-bloco" id="blocoPrazo" style="display: none;">
+                            <div class="small fw-semibold text-secondary mb-1">
+                                <i class="fa-solid fa-hourglass-half me-1 text-info"></i> Falta para despachar
+                            </div>
+                            <span id="mPrazo" class="prazo-countdown">—</span>
+                        </div>
+
+                        <div class="info-bloco">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="small fw-semibold text-secondary"><i class="fa-solid fa-location-dot me-1 text-danger"></i> Endereço de Entrega</span>
+                                <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.75rem;" onclick="copiarEndereco()" title="Copiar endereço completo">
+                                    <i class="fa-regular fa-copy me-1"></i> Copiar
+                                </button>
+                            </div>
+                            <p class="mb-1 small text-dark fw-medium" id="mEndereco"></p>
+                            <p class="mb-1 text-secondary" style="font-size: 0.8rem;" id="mComplementoContainer"><strong>Comp:</strong> <span id="mComplemento"></span></p>
+                            <p class="mb-1 text-secondary" style="font-size: 0.8rem;" id="mReferenciaContainer"><strong>Ref:</strong> <span id="mReferencia"></span></p>
+                            <p class="mb-0 text-muted" style="font-size: 0.8rem;"><strong>CEP:</strong> <span id="mCep"></span></p>
+                        </div>
+
+                        <div class="info-bloco">
+                            <div class="small fw-semibold text-secondary mb-1">
+                                <i class="fa-solid fa-wallet me-1 text-success"></i> Forma de Pagamento
+                            </div>
+                            <p class="mb-0 small text-dark fw-medium" id="mFormaPagamento">Não informada</p>
+                            <p class="mb-0 mt-1 small fw-bold text-danger d-none" id="mAlertaEntrega"></p>
+                        </div>
+
+                        <!-- Tempo de preparo deste pedido -->
+                        <div class="info-bloco">
+                            <div class="small fw-semibold text-secondary mb-2">
+                                <i class="fa-solid fa-stopwatch me-1 text-warning"></i> Tempo de Preparo (min)
+                            </div>
+                            <div class="d-flex gap-2">
+                                <input type="number" min="1" max="180" class="form-control form-control-sm" id="inputTempoPreparoPedido" placeholder="Min">
+                                <button type="button" class="btn btn-sm btn-outline-warning flex-shrink-0" id="btnSalvarTempoPreparo" onclick="salvarTempoPreparoPedido()">
+                                    <i class="fa-solid fa-save me-1"></i> Salvar
+                                </button>
+                            </div>
+                            <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">Altera o prazo deste pedido específico.</small>
+                            <small class="text-danger d-none mt-1" id="notaNaoEditavel" style="font-size: 0.72rem; font-weight: 600;">
+                                <i class="fa-solid fa-lock me-1"></i> Pedido concluído/cancelado — edição bloqueada.
+                            </small>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center p-2.5 mb-3 bg-white border rounded-3 shadow-sm">
+                            <span class="small text-muted fw-semibold">Total do Pedido</span>
+                            <span class="fw-bold text-success fs-5">R$ <span id="mTotal"></span></span>
+                        </div>
+
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <button type="button" class="btn btn-outline-dark btn-acao-custom w-100 d-flex align-items-center justify-content-center gap-1.5" onclick="copiarPedidoDetalhes()">
+                                    <i class="fa-regular fa-copy"></i> Copiar
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button type="button" class="btn btn-primary btn-acao-custom w-100 d-flex align-items-center justify-content-center gap-1.5" style="background-color: var(--cor-primaria); border-color: var(--cor-primaria);" onclick="imprimirPedido()">
+                                    <i class="fa-solid fa-print"></i> Imprimir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
+</div>
 
-    <!-- Layout dinâmico -->
-    <div class="row g-3" id="mainLayoutRow">
+<!-- Container de toasts (notificações em tempo real) -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="containerToasts" style="z-index: 1090;"></div>
 
-        <!-- Bloco Kanban -->
-        <div class="col-lg-12" id="kanbanContainerCol">
-            <div class="row g-2">
-
-                <!-- 1. PREPARANDO -->
-                <div class="col-lg-4 col-md-4 mb-2">
-                    <div class="kanban-column kanban-destaque" id="col-PREPARANDO">
-                        <div class="kanban-header" onclick="toggleColuna('col-PREPARANDO')">
-                            <span class="text-truncate text-dark"><i class="fa-solid fa-fire-burner text-warning me-1"></i> Preparando</span>
-                            <div class="d-flex align-items-center gap-1">
-                                <span class="badge bg-warning text-dark rounded-pill px-2" th:text="${preparando != null ? preparando.size() : 0}">0</span>
-                                <i class="fa-solid fa-chevron-down toggle-icon small text-muted"></i>
-                            </div>
-                        </div>
-                        <div class="kanban-body">
-                            <div th:if="${preparando == null || preparando.empty}" class="empty-msg">Nenhum pedido</div>
-                            <div class="pedido-card" th:each="p : ${preparando}">
-                                <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.cliente != null ? p.cliente.nome : 'Não informado'}]], [[${p.cliente != null ? p.cliente.celular : ''}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]])">
-                                    <div class="d-flex justify-content-between fw-bold mb-1 small">
-                                        <span>#<span th:text="${p.id}"></span></span>
-                                        <span class="text-success">R$ <span th:text="${p.valorTotal}"></span></span>
-                                    </div>
-                                    <div class="small text-truncate text-secondary fw-medium">
-                                        <span th:text="${p.cliente != null ? p.cliente.nome : 'Cliente'}"></span>
-                                    </div>
-                                </div>
-                                <div class="card-acoes-status">
-                                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.7rem;" th:onclick="alterarStatus([[${p.id}]], 'AGUARDANDO_ENTREGADOR')" title="Avançar para Pronto">
-                                        Pronto <i class="fa-solid fa-arrow-right ms-1"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 2. PRONTO -->
-                <div class="col-lg-4 col-md-4 mb-2">
-                    <div class="kanban-column kanban-destaque" id="col-AGUARDANDO_ENTREGADOR">
-                        <div class="kanban-header" onclick="toggleColuna('col-AGUARDANDO_ENTREGADOR')">
-                            <span class="text-truncate text-dark"><i class="fa-solid fa-box-open text-primary me-1"></i> Pronto</span>
-                            <div class="d-flex align-items-center gap-1">
-                                <span class="badge bg-primary text-white rounded-pill px-2" th:text="${aguardandoEntregador != null ? aguardandoEntregador.size() : 0}">0</span>
-                                <i class="fa-solid fa-chevron-down toggle-icon small text-muted"></i>
-                            </div>
-                        </div>
-                        <div class="kanban-body">
-                            <div th:if="${aguardandoEntregador == null || aguardandoEntregador.empty}" class="empty-msg">Nenhum pedido</div>
-                            <div class="pedido-card" th:each="p : ${aguardandoEntregador}">
-                                <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.cliente != null ? p.cliente.nome : 'Não informado'}]], [[${p.cliente != null ? p.cliente.celular : ''}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]])">
-                                    <div class="d-flex justify-content-between fw-bold mb-1 small">
-                                        <span>#<span th:text="${p.id}"></span></span>
-                                        <span class="text-success">R$ <span th:text="${p.valorTotal}"></span></span>
-                                    </div>
-                                    <div class="small text-truncate text-secondary fw-medium">
-                                        <span th:text="${p.cliente != null ? p.cliente.nome : 'Cliente'}"></span>
-                                    </div>
-                                </div>
-                                <div class="card-acoes-status justify-content-between">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.7rem;" th:onclick="alterarStatus([[${p.id}]], 'PREPARANDO')" title="Voltar para Preparando">
-                                        <i class="fa-solid fa-arrow-left me-1"></i> Preparando
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-info py-0 px-2 text-dark" style="font-size: 0.7rem;" th:onclick="alterarStatus([[${p.id}]], 'A_CAMINHO')" title="Despachar pedido">
-                                        Despachar <i class="fa-solid fa-arrow-right ms-1"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 3. DESPACHADO -->
-                <div class="col-lg-4 col-md-4 mb-2">
-                    <div class="kanban-column kanban-destaque" id="col-A_CAMINHO">
-                        <div class="kanban-header" onclick="toggleColuna('col-A_CAMINHO')">
-                            <span class="text-truncate text-dark"><i class="fa-solid fa-motorcycle text-info me-1"></i> Despachado</span>
-                            <div class="d-flex align-items-center gap-1">
-                                <span class="badge bg-info text-dark rounded-pill px-2" th:text="${aCaminho != null ? aCaminho.size() : 0}">0</span>
-                                <i class="fa-solid fa-chevron-down toggle-icon small text-muted"></i>
-                            </div>
-                        </div>
-                        <div class="kanban-body">
-                            <div th:if="${aCaminho == null || aCaminho.empty}" class="empty-msg">Nenhum pedido</div>
-                            <div class="pedido-card" th:each="p : ${aCaminho}">
-                                <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.cliente != null ? p.cliente.nome : 'Não informado'}]], [[${p.cliente != null ? p.cliente.celular : ''}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]])">
-                                    <div class="d-flex justify-content-between fw-bold mb-1 small">
-                                        <span>#<span th:text="${p.id}"></span></span>
-                                        <span class="text-success">R$ <span th:text="${p.valorTotal}"></span></span>
-                                    </div>
-                                    <div class="small text-truncate text-secondary fw-medium">
-                                        <span th:text="${p.cliente != null ? p.cliente.nome : 'Cliente'}"></span>
-                                    </div>
-                                </div>
-                                <div class="card-acoes-status justify-content-between">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.7rem;" th:onclick="alterarStatus([[${p.id}]], 'AGUARDANDO_ENTREGADOR')" title="Voltar para Pronto">
-                                        <i class="fa-solid fa-arrow-left me-1"></i> Pronto
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-success py-0 px-2" style="font-size: 0.7rem;" th:onclick="alterarStatus([[${p.id}]], 'CONCLUIDO')" title="Concluir pedido">
-                                        Concluir <i class="fa-solid fa-check ms-1"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 4. CONCLUÍDO -->
-                <div class="col-lg-6 col-md-6">
-                    <div class="kanban-column kanban-column-inferior minimized" id="col-CONCLUIDO">
-                        <div class="kanban-header" onclick="toggleColuna('col-CONCLUIDO')">
-                            <span class="text-truncate text-dark"><i class="fa-solid fa-check text-success me-1"></i> Concluídos</span>
-                            <div class="d-flex align-items-center gap-1">
-                                <span class="badge bg-success text-white rounded-pill px-2" th:text="${concluidos != null ? concluidos.size() : 0}">0</span>
-                                <i class="fa-solid fa-chevron-up toggle-icon small text-muted"></i>
-                            </div>
-                        </div>
-                        <div class="kanban-body">
-                            <div th:if="${concluidos == null || concluidos.empty}" class="empty-msg">Nenhum</div>
-                            <div class="pedido-card" th:each="p : ${concluidos}">
-                                <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.cliente != null ? p.cliente.nome : 'Não informado'}]], [[${p.cliente != null ? p.cliente.celular : ''}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]])">
-                                    <div class="d-flex justify-content-between fw-bold mb-1 small">
-                                        <span>#<span th:text="${p.id}"></span></span>
-                                        <span class="text-success">R$ <span th:text="${p.valorTotal}"></span></span>
-                                    </div>
-                                    <div class="small text-truncate text-secondary fw-medium">
-                                        <span th:text="${p.cliente != null ? p.cliente.nome : 'Cliente'}"></span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 5. CANCELADO -->
-                <div class="col-lg-6 col-md-6">
-                    <div class="kanban-column kanban-column-inferior minimized" id="col-CANCELADO">
-                        <div class="kanban-header" onclick="toggleColuna('col-CANCELADO')">
-                            <span class="text-truncate text-dark"><i class="fa-solid fa-ban text-danger me-1"></i> Cancelados</span>
-                            <div class="d-flex align-items-center gap-1">
-                                <span class="badge bg-danger text-white rounded-pill px-2" th:text="${cancelados != null ? cancelados.size() : 0}">0</span>
-                                <i class="fa-solid fa-chevron-up toggle-icon small text-muted"></i>
-                            </div>
-                        </div>
-                        <div class="kanban-body">
-                            <div th:if="${cancelados == null || cancelados.empty}" class="empty-msg">Nenhum</div>
-                            <div class="pedido-card" th:each="p : ${cancelados}">
-                                <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.cliente != null ? p.cliente.nome : 'Não informado'}]], [[${p.cliente != null ? p.cliente.celular : ''}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]])">
-                                    <div class="d-flex justify-content-between fw-bold mb-1 small">
-                                        <span>#<span th:text="${p.id}"></span></span>
-                                        <span class="text-success">R$ <span th:text="${p.valorTotal}"></span></span>
-                                    </div>
-                                    <div class="small text-truncate text-secondary fw-medium">
-                                        <span th:text="${p.cliente != null ? p.cliente.nome : 'Cliente'}"></span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+<!-- Modal de chat com o cliente -->
+<div class="modal fade" id="modalChat" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 14px;">
+            <div class="modal-header py-2" style="background:#f3efe9; border-bottom:1px solid var(--borda-suave);">
+                <span class="fw-semibold text-dark"><i class="fa-solid fa-comment-dots me-1"></i> Chat — <span id="chatTitulo">Pedido</span></span>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
-        </div>
-
-        <!-- Painel Lateral de Detalhes -->
-        <div class="col-lg-3 d-none" id="detalhesSidebarCol">
-            <div class="detalhes-sidebar">
-                <div class="detalhes-header d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="fw-semibold"><i class="fa-solid fa-circle-info me-1 text-secondary"></i> Descrição</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <!-- Botão de Configuração / Ações extras -->
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-light border text-secondary py-0 px-2 shadow-none dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Opções do pedido">
-                                <i class="fa-solid fa-gear"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 0.85rem;">
-                                <li>
-                                    <a class="dropdown-item text-danger fw-semibold" href="#" onclick="confirmarCancelamento()">
-                                        <i class="fa-solid fa-ban me-2"></i> Cancelar Pedido
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                        <button type="button" class="btn-close small text-muted shadow-none" onclick="fecharDetalhes()" aria-label="Fechar"></button>
-                    </div>
+            <div class="modal-body">
+                <div class="chat-modal-mensagens" id="chatMensagens">
+                    <div class="chat-modal-vazio">Carregando conversa...</div>
                 </div>
-
-                <div class="detalhes-body" id="painelPreenchido">
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="badge bg-light text-secondary border">Pedido #<span id="mId"></span></span>
-                            <span id="tagNumeroPedido" class="badge bg-warning text-dark fw-semibold" style="display: none;">
-                                <i class="fa-solid fa-star me-1"></i> <span id="mTextoNumeroPedido"></span>
-                            </span>
-                        </div>
-                        <h5 class="fw-bold text-dark mb-1" id="mNome"></h5>
-                        <p class="mb-0 text-muted small"><i class="fa-solid fa-phone me-1"></i> <span id="mCelular"></span></p>
-                    </div>
-
-                    <div class="info-bloco">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="small fw-semibold text-secondary"><i class="fa-solid fa-location-dot me-1 text-danger"></i> Endereço de Entrega</span>
-                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.75rem;" onclick="copiarEndereco()" title="Copiar endereço completo">
-                                <i class="fa-regular fa-copy me-1"></i> Copiar
-                            </button>
-                        </div>
-                        <p class="mb-1 small text-dark fw-medium" id="mEndereco"></p>
-                        <p class="mb-1 text-secondary" style="font-size: 0.8rem;" id="mComplementoContainer"><strong>Comp:</strong> <span id="mComplemento"></span></p>
-                        <p class="mb-1 text-secondary" style="font-size: 0.8rem;" id="mReferenciaContainer"><strong>Ref:</strong> <span id="mReferencia"></span></p>
-                        <p class="mb-0 text-muted" style="font-size: 0.8rem;"><strong>CEP:</strong> <span id="mCep"></span></p>
-                    </div>
-
-                    <div class="info-bloco">
-                        <div class="small fw-semibold text-secondary mb-1">
-                            <i class="fa-solid fa-wallet me-1 text-success"></i> Forma de Pagamento
-                        </div>
-                        <p class="mb-0 small text-dark fw-medium" id="mFormaPagamento">Não informada</p>
-                    </div>
-
-                    <div class="d-flex justify-content-between align-items-center p-2.5 mb-3 bg-white border rounded-3 shadow-sm">
-                        <span class="small text-muted fw-semibold">Total do Pedido</span>
-                        <span class="fw-bold text-success fs-5">R$ <span id="mTotal"></span></span>
-                    </div>
-
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <button type="button" class="btn btn-outline-dark btn-acao-custom w-100 d-flex align-items-center justify-content-center gap-1.5" onclick="copiarPedidoDetalhes()">
-                                <i class="fa-regular fa-copy"></i> Copiar
-                            </button>
-                        </div>
-                        <div class="col-6">
-                            <button type="button" class="btn btn-primary btn-acao-custom w-100 d-flex align-items-center justify-content-center gap-1.5" style="background-color: var(--cor-primaria); border-color: var(--cor-primaria);" onclick="imprimirPedido()">
-                                <i class="fa-solid fa-print"></i> Imprimir
-                            </button>
-                        </div>
-                    </div>
+                <div class="input-group mt-2">
+                    <input type="text" class="form-control" id="chatEntrada" maxlength="2000" placeholder="Escreva para o cliente...">
+                    <button type="button" class="btn btn-warning" id="chatEnviar" onclick="enviarMensagemLoja()"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
@@ -492,17 +857,36 @@
 
     let pedidoSelecionadoAtual = {};
 
-    function selecionarPedido(cardElement, id, nome, celular, total, rua, numero, bairro, cep, complemento, referencia, formaPagamento, numeroPedidoCliente) {
+    function selecionarPedido(cardElement, id, nome, celular, total, rua, numero, bairro, cep, complemento, referencia, formaPagamento, numeroPedidoCliente, tempoPreparoMinutos, prazoEpochMillis) {
         document.querySelectorAll('.pedido-card').forEach(c => c.classList.remove('active-card'));
         cardElement.closest('.pedido-card').classList.add('active-card');
 
-        pedidoSelecionadoAtual = { id, nome, celular, total, rua, numero, bairro, cep, complemento, referencia, formaPagamento, numeroPedidoCliente };
+        const card = cardElement.closest('.pedido-card');
+        const status = card.getAttribute('data-status') || '';
+        const naEntrega = card.getAttribute('data-naentrega') === 'true';
+        const troco = card.getAttribute('data-troco') || '';
+
+        pedidoSelecionadoAtual = { id, nome, celular, total, rua, numero, bairro, cep, complemento, referencia, formaPagamento, numeroPedidoCliente, tempoPreparoMinutos, prazoEpochMillis, status };
+        aplicarModoEdicao(status);
 
         document.getElementById('mId').innerText = id;
         document.getElementById('mNome').innerText = nome || 'Não informado';
         document.getElementById('mCelular').innerText = celular || 'Não informado';
         document.getElementById('mTotal').innerText = total || '0,00';
         document.getElementById('mFormaPagamento').innerText = formaPagamento || 'Não informada';
+
+        // Destaque de pagamento na entrega (dinheiro/maquininha) no painel lateral
+        const alerta = document.getElementById('mAlertaEntrega');
+        if (naEntrega) {
+            let txt = (formaPagamento === 'CARTAO') ? 'Cobrar na entrega via maquininha' : 'Cobrar em dinheiro na entrega';
+            if (formaPagamento !== 'CARTAO' && troco) {
+                txt += ' · troco p/ R$ ' + Number(troco).toFixed(2).replace('.', ',');
+            }
+            alerta.textContent = txt;
+            alerta.classList.remove('d-none');
+        } else {
+            alerta.classList.add('d-none');
+        }
 
         let enderecoBase = (rua || 'Rua não informada') + (numero ? ', ' + numero : '') + (bairro ? ' - ' + bairro : '');
         document.getElementById('mEndereco').innerText = enderecoBase;
@@ -533,12 +917,25 @@
             tagPedido.style.display = 'none';
         }
 
+        // Tempo de preparo (input editável deste pedido)
+        document.getElementById('inputTempoPreparoPedido').value = (tempoPreparoMinutos != null) ? tempoPreparoMinutos : '';
+
+        // Prazo para despachar: relevante apenas enquanto o pedido está sendo preparado
+        let blocoPrazo = document.getElementById('blocoPrazo');
+        if (status === 'PREPARANDO' && prazoEpochMillis) {
+            blocoPrazo.style.display = 'block';
+        } else {
+            blocoPrazo.style.display = 'none';
+        }
+
         let kanbanCol = document.getElementById('kanbanContainerCol');
         let sidebarCol = document.getElementById('detalhesSidebarCol');
 
         kanbanCol.classList.remove('col-lg-12');
         kanbanCol.classList.add('col-lg-9');
         sidebarCol.classList.remove('d-none');
+
+        atualizarCountdowns();
     }
 
     function fecharDetalhes() {
@@ -551,13 +948,70 @@
         sidebarCol.classList.add('d-none');
     }
 
-    /* COMUNICAÇÃO REAL COM A API SPRING BOOT (SEM CONFIRMAÇÃO) */
+    /* Bloqueia a edição (tempo de preparo, editar e cancelar) para pedidos finalizados */
+    function aplicarModoEdicao(status) {
+        const editavel = status !== 'CONCLUIDO' && status !== 'CANCELADO';
+
+        const input = document.getElementById('inputTempoPreparoPedido');
+        const btn = document.getElementById('btnSalvarTempoPreparo');
+        const menuEditar = document.getElementById('menuEditarPedido');
+        const menuCancelar = document.getElementById('menuCancelarPedido');
+        const nota = document.getElementById('notaNaoEditavel');
+
+        if (input) input.disabled = !editavel;
+        if (btn) btn.disabled = !editavel;
+        if (menuEditar) menuEditar.classList.toggle('disabled', !editavel);
+        if (menuCancelar) menuCancelar.classList.toggle('disabled', !editavel);
+        if (nota) nota.classList.toggle('d-none', editavel);
+    }
+
+    /* ===== Contagem regressiva ===== */
+    function formatarPrazo(prazoMillis) {
+        if (!prazoMillis || prazoMillis <= 0) return null;
+        const restanteMs = prazoMillis - Date.now();
+        const minutos = Math.round(restanteMs / 60000);
+        if (minutos > 0) return { texto: `Falta ${minutos} min`, atrasado: false };
+        if (minutos < 0) return { texto: `Atrasado ${Math.abs(minutos)} min`, atrasado: true };
+        return { texto: 'Despachar agora', atrasado: true };
+    }
+
+    function atualizarCountdowns() {
+        // Badges nos cards (coluna Preparando)
+        document.querySelectorAll('.prazo-countdown[data-prazo]').forEach(el => {
+            const prazo = parseInt(el.getAttribute('data-prazo'), 10);
+            const info = formatarPrazo(prazo);
+            if (!info) { el.textContent = '—'; return; }
+            el.textContent = info.texto;
+            el.classList.toggle('prazo-ok', !info.atrasado);
+            el.classList.toggle('prazo-atrasado', info.atrasado);
+        });
+
+        // Badge do painel lateral (pedido selecionado)
+        const mPrazo = document.getElementById('mPrazo');
+        const blocoPrazo = document.getElementById('blocoPrazo');
+        if (blocoPrazo.style.display !== 'none' && pedidoSelecionadoAtual.prazoEpochMillis) {
+            const info = formatarPrazo(pedidoSelecionadoAtual.prazoEpochMillis);
+            if (info) {
+                mPrazo.textContent = info.texto;
+                mPrazo.classList.toggle('prazo-ok', !info.atrasado);
+                mPrazo.classList.toggle('prazo-atrasado', info.atrasado);
+            }
+        }
+    }
+
+    /* ===== Comunicação com o backend ===== */
+    function cabecalhosComCsrf(extra) {
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+        const headers = Object.assign({}, extra);
+        if (csrfHeader && csrfToken) headers[csrfHeader] = csrfToken;
+        return headers;
+    }
+
     function alterarStatus(idPedido, novoStatus) {
         fetch(`/pedidos/${idPedido}/status?status=${novoStatus}`, {
             method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            }
+            headers: cabecalhosComCsrf({ 'Content-Type': 'application/json' })
         })
             .then(response => {
                 if (response.ok) {
@@ -572,12 +1026,82 @@
             });
     }
 
+    function salvarTempoPreparoPedido() {
+        if (!pedidoSelecionadoAtual.id) {
+            alert('Selecione um pedido primeiro.');
+            return;
+        }
+        if (pedidoSelecionadoAtual.status === 'CONCLUIDO' || pedidoSelecionadoAtual.status === 'CANCELADO') {
+            alert('Não é possível alterar o tempo de um pedido concluído ou cancelado.');
+            return;
+        }
+        const minutos = parseInt(document.getElementById('inputTempoPreparoPedido').value, 10);
+        if (!minutos || minutos < 1 || minutos > 180) {
+            alert('Informe um tempo entre 1 e 180 minutos.');
+            return;
+        }
+        fetch(`/pedidos/${pedidoSelecionadoAtual.id}/tempo-preparo?minutos=${minutos}`, {
+            method: 'PATCH',
+            headers: cabecalhosComCsrf()
+        })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    return response.text().then(t => alert(t || 'Erro ao salvar o tempo de preparo.'));
+                }
+            })
+            .catch(error => {
+                console.error('Erro de conexão:', error);
+                alert('Erro de comunicação com o servidor.');
+            });
+    }
+
+    function salvarPreparoPadrao() {
+        const minutos = parseInt(document.getElementById('inputPreparoPadrao').value, 10);
+        if (!minutos || minutos < 1 || minutos > 180) {
+            alert('Informe um tempo entre 1 e 180 minutos.');
+            return;
+        }
+        fetch(`/pedidos/configuracao/preparo?minutos=${minutos}`, {
+            method: 'POST',
+            headers: cabecalhosComCsrf()
+        })
+            .then(response => {
+                if (response.ok) {
+                    alert('Tempo de preparo padrão salvo com sucesso!');
+                } else {
+                    return response.text().then(t => alert(t || 'Erro ao salvar a configuração.'));
+                }
+            })
+            .catch(error => {
+                console.error('Erro de conexão:', error);
+                alert('Erro de comunicação com o servidor.');
+            });
+    }
+
     function confirmarCancelamento() {
+        if (pedidoSelecionadoAtual.status === 'CONCLUIDO' || pedidoSelecionadoAtual.status === 'CANCELADO') {
+            alert('Este pedido já está concluído ou cancelado.');
+            return;
+        }
         if (pedidoSelecionadoAtual.id) {
             if (confirm(`Deseja realmente cancelar o pedido #${pedidoSelecionadoAtual.id}?`)) {
                 alterarStatus(pedidoSelecionadoAtual.id, 'CANCELADO');
             }
         }
+    }
+
+    function editarPedido() {
+        if (!pedidoSelecionadoAtual.id) {
+            alert('Nenhum pedido selecionado para edição.');
+            return;
+        }
+        if (pedidoSelecionadoAtual.status === 'CONCLUIDO' || pedidoSelecionadoAtual.status === 'CANCELADO') {
+            alert('Não é possível editar um pedido concluído ou cancelado.');
+            return;
+        }
+        window.location.href = `/pedidos/${pedidoSelecionadoAtual.id}/editar`;
     }
 
     function filtrarCards() {
@@ -617,9 +1141,405 @@
             alert('Nenhum pedido selecionado para impressão.');
             return;
         }
-        // Direciona para o endpoint Spring Boot que faz a impressão física
         window.location.href = `/pedidos/${pedidoSelecionadoAtual.id}/imprimir`;
     }
+
+    /* ===== Relógio em tempo real ===== */
+    function atualizarRelogio() {
+        const agora = new Date();
+        document.getElementById('relogio').textContent =
+            agora.toLocaleTimeString('pt-BR') + ' · ' + agora.toLocaleDateString('pt-BR');
+    }
+
+    /* ===== Menu lateral recolhível ===== */
+    function alternarMenuLateral() {
+        const wrapper = document.getElementById('app-wrapper');
+        const recolhido = wrapper.classList.toggle('collapsed');
+        const icone = document.getElementById('btnRecolherMenu').querySelector('i');
+        icone.classList.toggle('fa-angles-left', !recolhido);
+        icone.classList.toggle('fa-angles-right', recolhido);
+        document.getElementById('btnRecolherMenu').title = recolhido ? 'Expandir menu' : 'Recolher menu';
+    }
+
+    /* ===== Som (Web Audio API) ===== */
+    let somAtivo = true;
+    let contextoAudio = null;
+
+    function obterContextoAudio() {
+        if (!contextoAudio) {
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (Ctx) contextoAudio = new Ctx();
+        }
+        return contextoAudio;
+    }
+
+    function tocarSom(tipo) {
+        if (!somAtivo) return;
+        try {
+            const ctx = obterContextoAudio();
+            if (!ctx) return;
+            if (ctx.state === 'suspended') ctx.resume();
+            const notas = (tipo === 'urgente') ? [880, 660, 880] : [660, 660];
+            const agora = ctx.currentTime;
+            notas.forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.0001, agora + i * 0.18);
+                gain.gain.exponentialRampToValueAtTime(0.22, agora + i * 0.18 + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, agora + i * 0.18 + 0.15);
+                osc.connect(gain).connect(ctx.destination);
+                osc.start(agora + i * 0.18);
+                osc.stop(agora + i * 0.18 + 0.16);
+            });
+        } catch (e) {
+            /* Áudio indisponível: segue sem som */
+        }
+    }
+
+    function alternarSom() {
+        somAtivo = !somAtivo;
+        const icone = document.getElementById('btnSom').querySelector('i');
+        icone.classList.toggle('fa-volume-high', somAtivo);
+        icone.classList.toggle('fa-volume-xmark', !somAtivo);
+        document.getElementById('btnSom').title = somAtivo ? 'Som das notificações ligado' : 'Som das notificações desligado';
+        if (somAtivo) tocarSom('normal');
+    }
+
+    /* ===== Notificação nativa do navegador (aparece mesmo com a aba em segundo plano) ===== */
+    function suporteNotificacao() { return ('Notification' in window); }
+
+    function pedirPermissaoNotificacao() {
+        if (!suporteNotificacao()) return;
+        if (Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    }
+
+    function notificarNativo(titulo, corpo) {
+        if (!suporteNotificacao() || Notification.permission !== 'granted') return;
+        try {
+            const n = new Notification(titulo, { body: corpo, icon: '/img/logo.png' });
+            n.onclick = function() { window.focus(); n.close(); };
+        } catch (e) {
+            /* Notificação nativa indisponível: segue com o toast/som */
+        }
+    }
+
+    /* ===== Toasts ===== */
+    function escaparHtml(texto) {
+        const div = document.createElement('div');
+        div.textContent = texto == null ? '' : String(texto);
+        return div.innerHTML;
+    }
+
+    function mostrarToast(titulo, mensagem, tipo) {
+        const cores = { novo: '#1e7a34', atencao: '#d9822b', atrasado: '#c0392b', pronto: '#0d6efd' };
+        const el = document.createElement('div');
+        el.className = 'toast align-items-center text-white border-0';
+        el.style.backgroundColor = cores[tipo] || '#5c3a21';
+        el.setAttribute('role', 'alert');
+        el.innerHTML =
+            '<div class="d-flex">' +
+                '<div class="toast-body">' +
+                    '<strong>' + escaparHtml(titulo) + '</strong><br>' +
+                    '<span class="small">' + escaparHtml(mensagem) + '</span>' +
+                '</div>' +
+                '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>' +
+            '</div>';
+        document.getElementById('containerToasts').appendChild(el);
+        const toast = new bootstrap.Toast(el, { delay: 8000 });
+        el.addEventListener('hidden.bs.toast', function() { el.remove(); });
+        toast.show();
+    }
+
+    /* ===== Notificações (polling do backend) ===== */
+    const LIMIAR_DESPACHO_MS = 5 * 60 * 1000; // alerta "perto de despachar" quando faltam <= 5 min
+    let pedidosConhecidos = new Map(); // id -> { status, atrasado, proximo }
+    let primeiroPoll = true;
+
+    function statusTexto(status) {
+        const mapa = { PREPARANDO: 'Preparando', AGUARDANDO_ENTREGADOR: 'Pronto', A_CAMINHO: 'A caminho' };
+        return mapa[status] || status;
+    }
+
+    function adicionarNotificacaoCentro(titulo, detalhe, tipo) {
+        const lista = document.getElementById('listaNotificacoes');
+        const placeholder = lista.querySelector('.nenhuma-notificacao');
+        if (placeholder) placeholder.remove();
+
+        const icone = tipo === 'atrasado' ? '<i class="fa-solid fa-triangle-exclamation text-danger"></i>'
+                     : tipo === 'atencao' ? '<i class="fa-solid fa-hourglass-half text-warning"></i>'
+                     : tipo === 'pronto' ? '<i class="fa-solid fa-box-open text-primary"></i>'
+                     : '<i class="fa-solid fa-fire-burner text-success"></i>';
+
+        const item = document.createElement('a');
+        item.href = '#';
+        item.className = 'dropdown-item d-flex align-items-start gap-2 py-2';
+        item.innerHTML =
+            '<span class="flex-shrink-0">' + icone + '</span>' +
+            '<span class="flex-grow-1">' +
+                '<span class="d-block fw-semibold text-dark">' + escaparHtml(titulo) + '</span>' +
+                '<span class="d-block text-muted small">' + escaparHtml(detalhe) + '</span>' +
+            '</span>' +
+            '<span class="flex-shrink-0 text-muted" style="font-size: 0.7rem;">' +
+                new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) +
+            '</span>';
+
+        lista.prepend(item);
+        while (lista.children.length > 30) lista.removeChild(lista.lastChild);
+        atualizarBadge();
+    }
+
+    function atualizarBadge() {
+        const badge = document.getElementById('badgeNotificacoes');
+        const total = document.getElementById('listaNotificacoes').querySelectorAll('.dropdown-item').length;
+        badge.textContent = total;
+        badge.style.display = total > 0 ? 'inline-block' : 'none';
+    }
+
+    function limparNotificacoes() {
+        const lista = document.getElementById('listaNotificacoes');
+        lista.innerHTML = '<div class="px-3 py-4 text-center text-muted small nenhuma-notificacao">Nenhuma notificação ainda.</div>';
+        atualizarBadge();
+    }
+
+    // Atualiza o quadro kanban sem recarregar a página (busca o fragmento renderizado no servidor).
+    function atualizarQuadro() {
+        fetch('/pedidos/gerenciar/quadro', { headers: cabecalhosComCsrf() })
+            .then(function(r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.text();
+            })
+            .then(function(html) {
+                const container = document.getElementById('kanbanContainerCol');
+                container.innerHTML = html;
+                // Reaplica a seleção ativa (se o pedido ainda existir no quadro)
+                if (pedidoSelecionadoAtual && pedidoSelecionadoAtual.id) {
+                    const cardAtivo = container.querySelector('.pedido-card[data-id="' + pedidoSelecionadoAtual.id + '"]');
+                    if (cardAtivo) cardAtivo.classList.add('active-card');
+                }
+                atualizarCountdowns();
+                filtrarCards();
+                aplicarBadgesChat();
+            })
+            .catch(function(err) { console.error('Falha ao atualizar quadro:', err); });
+    }
+
+    function verificarNotificacoes() {
+        fetch('/pedidos/notificacoes', { headers: cabecalhosComCsrf() })
+            .then(function(r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(function(dados) {
+                const atuais = new Map();
+                dados.forEach(function(p) { atuais.set(p.id, p); });
+                let quadroAlterado = false;
+
+                // Primeira checagem: apenas registra a linha de base, sem disparar alertas de "novo"
+                if (primeiroPoll) {
+                    dados.forEach(function(p) {
+                        pedidosConhecidos.set(p.id, { status: p.status, atrasado: false, proximo: false });
+                    });
+                    primeiroPoll = false;
+                    return;
+                }
+
+                // Detecta novos pedidos e mudanças de status (atualiza o quadro em tempo real)
+                atuais.forEach(function(p, id) {
+                    const conhecido = pedidosConhecidos.get(id);
+                    if (!conhecido) {
+                        pedidosConhecidos.set(id, { status: p.status, atrasado: false, proximo: false });
+                        quadroAlterado = true;
+                        if (p.status === 'PREPARANDO') {
+                            mostrarToast('Novo pedido!', '#' + p.id + ' — ' + p.cliente + ' entrou em preparo.', 'novo');
+                            adicionarNotificacaoCentro('Novo pedido #' + p.id,
+                                p.cliente + ' · R$ ' + Number(p.total || 0).toFixed(2), 'novo');
+                            tocarSom('normal');
+                            notificarNativo('Novo pedido #' + p.id,
+                                p.cliente + ' entrou em preparo · R$ ' + Number(p.total || 0).toFixed(2));
+                        }
+                    } else if (conhecido.status !== p.status) {
+                        conhecido.status = p.status;
+                        quadroAlterado = true;
+                    }
+                });
+
+                // Avalia prazos dos pedidos em preparo (perto de despachar / atrasado)
+                const agora = Date.now();
+                atuais.forEach(function(p, id) {
+                    if (p.status !== 'PREPARANDO') return;
+                    const conhecido = pedidosConhecidos.get(id);
+                    if (!conhecido) return;
+                    const restante = (p.prazo || 0) - agora;
+
+                    if (restante <= 0 && !conhecido.atrasado) {
+                        conhecido.atrasado = true;
+                        mostrarToast('Pedido atrasado!', '#' + p.id + ' — ' + p.cliente + ' passou do prazo de despacho.', 'atrasado');
+                        adicionarNotificacaoCentro('Pedido #' + p.id + ' atrasado', p.cliente + ' — passou do prazo.', 'atrasado');
+                        tocarSom('urgente');
+                        notificarNativo('Pedido atrasado #' + p.id, p.cliente + ' passou do prazo de despacho.');
+                    } else if (restante > 0 && restante <= LIMIAR_DESPACHO_MS && !conhecido.proximo) {
+                        conhecido.proximo = true;
+                        mostrarToast('Perto de despachar', '#' + p.id + ' — ' + p.cliente + ' está perto do prazo.', 'atencao');
+                        adicionarNotificacaoCentro('Perto de despachar #' + p.id, p.cliente + ' — prazo se aproximando.', 'atencao');
+                        tocarSom('normal');
+                    }
+                });
+
+                // Remove do acompanhamento os pedidos que saíram da tela ativa
+                pedidosConhecidos.forEach(function(v, id) {
+                    if (!atuais.has(id)) {
+                        pedidosConhecidos.delete(id);
+                        quadroAlterado = true;
+                    }
+                });
+
+                // Atualiza o quadro (kanban) sem recarregar a página, se algo mudou.
+                if (quadroAlterado) atualizarQuadro();
+            })
+            .catch(function(err) { console.error('Falha ao buscar notificações:', err); });
+    }
+
+    /* ===== Chat (loja <-> cliente) ===== */
+    let chatAbertoId = null;
+    let naoLidasChat = {}; // pedidoId -> nº de mensagens não lidas enviadas pelo cliente
+    const idsChatConhecidos = {}; // pedidoId -> Set de ids de mensagens já renderizadas
+
+    function aplicarBadgesChat() {
+        document.querySelectorAll('.chat-badge-naolidas').forEach(function (badge) {
+            const id = badge.getAttribute('data-id');
+            const n = naoLidasChat[id] || 0;
+            badge.textContent = n > 99 ? '99+' : n;
+            badge.style.display = n > 0 ? 'inline-block' : 'none';
+        });
+    }
+
+    function formatarHoraChat(ms) {
+        if (!ms) return '';
+        return new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function renderMensagensChat(pedidoId, msgs) {
+        const caixa = document.getElementById('chatMensagens');
+        if (!idsChatConhecidos[pedidoId]) idsChatConhecidos[pedidoId] = new Set();
+        const conhecidas = idsChatConhecidos[pedidoId];
+        let novo = false;
+        msgs.forEach(function (m) {
+            if (conhecidas.has(String(m.id))) return;
+            const balao = document.createElement('div');
+            balao.className = 'chat-modal-balao ' + (m.remetente === 'LOJA' ? 'chat-modal-loja' : 'chat-modal-cliente');
+            const texto = document.createElement('span');
+            texto.textContent = m.texto;
+            const hora = document.createElement('span');
+            hora.className = 'chat-modal-hora';
+            hora.textContent = formatarHoraChat(m.dataHoraEpochMillis);
+            balao.appendChild(texto);
+            balao.appendChild(hora);
+            caixa.appendChild(balao);
+            conhecidas.add(String(m.id));
+            novo = true;
+        });
+        const vazio = caixa.querySelector('.chat-modal-vazio');
+        if (caixa.querySelectorAll('.chat-modal-balao').length > 0 && vazio) vazio.remove();
+        if (novo) caixa.scrollTop = caixa.scrollHeight;
+    }
+
+    function carregarMensagensChat(pedidoId, marcarLida) {
+        fetch('/pedidos/' + pedidoId + '/chat', { headers: cabecalhosComCsrf() })
+            .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+            .then(function (msgs) {
+                renderMensagensChat(pedidoId, msgs);
+                if (marcarLida) {
+                    fetch('/pedidos/' + pedidoId + '/chat/lidas', { method: 'POST', headers: cabecalhosComCsrf() });
+                    naoLidasChat[pedidoId] = 0;
+                    aplicarBadgesChat();
+                }
+            })
+            .catch(function (err) { console.error('Falha ao carregar chat:', err); });
+    }
+
+    function abrirChat(btn) {
+        const pedidoId = btn.getAttribute('data-id');
+        chatAbertoId = pedidoId;
+        const card = btn.closest('.pedido-card');
+        const nomeEl = card ? card.querySelector('.card-conteudo-clicavel .text-secondary') : null;
+        document.getElementById('chatTitulo').textContent = 'Pedido #' + pedidoId + (nomeEl ? ' · ' + nomeEl.textContent.trim() : '');
+        const caixa = document.getElementById('chatMensagens');
+        caixa.innerHTML = '<div class="chat-modal-vazio">Carregando conversa...</div>';
+        idsChatConhecidos[pedidoId] = new Set();
+        carregarMensagensChat(pedidoId, true);
+        new bootstrap.Modal(document.getElementById('modalChat')).show();
+    }
+
+    function enviarMensagemLoja() {
+        if (!chatAbertoId) return;
+        const input = document.getElementById('chatEntrada');
+        const texto = input.value.trim();
+        if (!texto) return;
+        input.value = '';
+        fetch('/pedidos/' + chatAbertoId + '/chat', {
+            method: 'POST',
+            headers: cabecalhosComCsrf({ 'Content-Type': 'application/x-www-form-urlencoded' }),
+            body: 'texto=' + encodeURIComponent(texto)
+        })
+            .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+            .then(function (m) { renderMensagensChat(chatAbertoId, [m]); })
+            .catch(function (err) { input.value = texto; console.error('Falha ao enviar mensagem:', err); });
+    }
+
+    function verificarChatNaoLidas() {
+        fetch('/pedidos/chat/naolidas', { headers: cabecalhosComCsrf() })
+            .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+            .then(function (mapa) {
+                Object.keys(mapa).forEach(function (id) {
+                    const antes = naoLidasChat[id] || 0;
+                    if (mapa[id] > antes) {
+                        mostrarToast('Nova mensagem do cliente', 'Pedido #' + id + ' entrou em contato no chat.', 'pronto');
+                        tocarSom('normal');
+                    }
+                });
+                naoLidasChat = mapa;
+                aplicarBadgesChat();
+                if (chatAbertoId) carregarMensagensChat(chatAbertoId, true);
+            })
+            .catch(function (err) { console.error('Falha ao verificar chat:', err); });
+    }
+
+    document.getElementById('modalChat').addEventListener('hidden.bs.modal', function () {
+        chatAbertoId = null;
+    });
+    document.getElementById('chatEntrada').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') enviarMensagemLoja();
+    });
+
+    /* Inicialização */
+    document.addEventListener('DOMContentLoaded', function() {
+        atualizarRelogio();
+        atualizarCountdowns();
+        verificarNotificacoes();
+        verificarChatNaoLidas();
+        pedirPermissaoNotificacao();
+    });
+    // Alguns navegadores só aceitam o pedido de permissão após um gesto do usuário.
+    window.addEventListener('click', function pedirUmaVez() {
+        pedirPermissaoNotificacao();
+        window.removeEventListener('click', pedirUmaVez);
+    });
+    // Quando a aba volta a ficar visível, atualiza na hora (compensa o polling reduzido em segundo plano).
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') {
+            verificarNotificacoes();
+            verificarChatNaoLidas();
+            atualizarCountdowns();
+        }
+    });
+    setInterval(atualizarRelogio, 1000);
+    setInterval(atualizarCountdowns, 15000);
+    setInterval(verificarNotificacoes, 10000);
+    setInterval(verificarChatNaoLidas, 8000);
 </script>
 </body>
 </html>

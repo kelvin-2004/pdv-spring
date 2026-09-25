@@ -14,12 +14,19 @@ public class clientes {
     private String nome;
     @Column(unique = true)
     private String celular;
+    @Column(unique = true)
+    private String email;
+    @Column(unique = true)
+    private String googleId;
     private String cep;
     private String rua;
     private String Bairro;
     private String numero;
     private String Complemento;
     private String pontoReferencia;
+
+    @Column(name = "senha")
+    private String senha;
 
 
 }

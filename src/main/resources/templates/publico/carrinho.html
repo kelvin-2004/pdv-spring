@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marmitas Sousa | Carrinho</title>
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/publico.css}">
+    <style>
+        :root { --p:#63452C; --s:#F6D32D; --f:#F6F5F4; }
+        body { background:var(--f); color:#332a26; }
+        .navbar-custom { background:var(--p); }
+        .navbar-custom .nav-link, .navbar-custom .navbar-brand { color:#fff; }
+        .navbar-custom .nav-link:hover { color:var(--s); }
+        .logo { width:42px; height:42px; border-radius:50%; border:2px solid var(--s); object-fit:cover; }
+        .btn-m { background:var(--s); color:var(--p); font-weight:700; border:0; }
+        .btn-m:hover { background:#e0be23; color:var(--p); }
+        .cart-card { border:0; border-radius:14px; box-shadow:0 8px 22px #63452c14; }
+        .sugestao-chip { border-radius:20px; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-custom py-2">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" th:href="@{/site}"><img class="logo" th:src="@{/img/logo.png}" alt="Marmitas Sousa">Marmitas Sousa</a>
+        <div class="navbar-nav"><a class="nav-link" th:href="@{/site}"><i class="fa-solid fa-arrow-left me-1"></i>Voltar ao cardápio</a></div>
+    </div>
+</nav>
+<main class="container py-5">
+    <div th:if="${!lojaAberta}" class="alert alert-warning d-flex align-items-center gap-2" role="alert">
+        <i class="fa-solid fa-store-slash me-1"></i>
+        <span>A loja está fechada no momento. <span th:text="${lojaStatus}">Abre amanhã às 10:00</span>.</span>
+    </div>
+    <h1 class="h3 fw-bold mb-4">Seu carrinho</h1>
+    <div class="row g-4">
+        <section class="col-lg-8">
+            <div class="card cart-card"><div class="card-body p-4" id="cartItems"></div></div>
+        </section>
+        <aside class="col-lg-4">
+            <div class="card cart-card"><div class="card-body p-4">
+                <div class="d-flex justify-content-between mb-2"><span class="text-muted">Subtotal</span><span id="cartSubtotal">R$ 0,00</span></div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold d-block mb-2">Como quer receber?</label>
+                    <div class="btn-group w-100" role="group" aria-label="Forma de recebimento">
+                        <input type="radio" class="btn-check" name="tipoRecebimento" id="optEntrega" value="DELIVERY" checked>
+                        <label class="btn btn-outline-secondary" for="optEntrega"><i class="fa-solid fa-motorcycle me-1"></i>Entrega</label>
+                        <input type="radio" class="btn-check" name="tipoRecebimento" id="optRetirada" value="RETIRADA">
+                        <label class="btn btn-outline-secondary" for="optRetirada"><i class="fa-solid fa-store me-1"></i>Retirar</label>
+                    </div>
+                </div>
+
+                <div id="painelEntrega" class="mb-3">
+                    <div class="input-group input-group-sm mb-2">
+                        <input type="text" class="form-control" id="cep" inputmode="numeric" maxlength="9" placeholder="CEP" th:value="${clientePublico != null ? clientePublico.cep : ''}">
+                        <button class="btn btn-outline-secondary" type="button" onclick="calcularEntrega()">Calcular</button>
+                    </div>
+                    <div id="entregaResultado" class="small mb-2"></div>
+                    <input type="text" class="form-control form-control-sm mb-2" id="rua" placeholder="Rua" th:value="${clientePublico != null ? clientePublico.rua : ''}">
+                    <div class="row g-2 mb-2">
+                        <div class="col-5"><input type="text" class="form-control form-control-sm" id="numero" placeholder="Número" th:value="${clientePublico != null ? clientePublico.numero : ''}"></div>
+                        <div class="col-7"><input type="text" class="form-control form-control-sm" id="bairro" placeholder="Bairro" th:value="${clientePublico != null ? clientePublico.bairro : ''}"></div>
+                    </div>
+                    <input type="text" class="form-control form-control-sm" id="complemento" placeholder="Complemento (opcional)" th:value="${clientePublico != null ? clientePublico.complemento : ''}">
+                </div>
+
+                <div id="painelRetirada" class="mb-3" style="display:none;">
+                    <div class="rounded-3 p-3" style="background:#fff7db; border:1px solid #f0e0a0;">
+                        <div class="d-flex gap-2 align-items-start">
+                            <i class="fa-solid fa-store mt-1" style="color:var(--p);"></i>
+                            <div>
+                                <div class="fw-semibold small">Retire seu pedido em:</div>
+                                <div class="small" th:text="${loja.linha1}">R. Quinze, 292 - Jardim Vassouras</div>
+                                <div class="small text-muted" th:text="${loja.linha2}">Francisco Morato - SP</div>
+                                <a class="small fw-semibold text-decoration-none mt-1 d-inline-block" th:href="${loja.maps}" target="_blank" rel="noopener" style="color:var(--p);">
+                                    <i class="fa-solid fa-location-arrow me-1"></i>Como chegar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mb-2"><span class="text-muted">Taxa de entrega</span><span id="cartTaxa">R$ 0,00</span></div>
+                <div class="d-flex justify-content-between mb-2" id="linhaDesconto" style="display:none;"><span class="text-muted">Desconto</span><span id="cartDesconto" class="text-success">- R$ 0,00</span></div>
+                <div class="d-flex justify-content-between fw-bold fs-5 border-top pt-3 mb-3"><span>Total</span><span id="cartTotal">R$ 0,00</span></div>
+
+                <div th:if="${clientePublico != null}">
+                    <label class="form-label small fw-semibold" for="cupomInput">Cupom de desconto</label>
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control" id="cupomInput" placeholder="Ex.: BEMVINDO10" autocomplete="off">
+                        <button class="btn btn-outline-secondary" type="button" onclick="aplicarCupom()">Aplicar</button>
+                    </div>
+                    <div id="cupomResultado" class="small mb-2"></div>
+                    <label class="form-label small fw-semibold" for="observacoes">Observações</label>
+                    <textarea class="form-control mb-3" id="observacoes" rows="2" placeholder="Ex.: sem cebola"></textarea>
+                    <button class="btn btn-m w-100" type="button" onclick="irParaPagamento()" th:disabled="${!lojaAberta}">Finalizar pedido</button>
+                </div>
+                <a th:if="${clientePublico == null}" th:href="@{/site/login}" class="btn btn-m w-100">Entre para finalizar</a>
+            </div></div>
+        </aside>
+    </div>
+</main>
+<script th:inline="javascript">
+    const bebidasSugeridas = /*[[${bebidas}]]*/ [];
+</script>
+<script>
+    let carrinho = JSON.parse(localStorage.getItem('carrinhoPublico') || '[]');
+    let subtotalAtual = 0;
+    let taxaEntrega = 0;
+    let entregaInfo = null; // resultado da consulta de CEP (guarda tempo/endereço p/ o pedido)
+    let descontoCupom = 0;
+    let cupomCodigo = '';
+    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+    function salvar() { localStorage.setItem('carrinhoPublico', JSON.stringify(carrinho)); }
+    function escAttr(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function escHtml(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+    function dinheiro(v) { return v.toFixed(2).replace('.', ','); }
+
+    function alterar(id, delta) {
+        const item = carrinho.find(i => i.id === id);
+        if (!item) return;
+        item.quantidade += delta;
+        if (item.quantidade <= 0) carrinho = carrinho.filter(i => i.id !== id);
+        render();
+    }
+    function remover(id) { carrinho = carrinho.filter(i => i.id !== id); render(); }
+    function editarObservacao(id, valor) {
+        const item = carrinho.find(i => i.id === id);
+        if (item) { item.observacao = valor; salvar(); }
+    }
+    function adicionarSugestao(id) {
+        const b = bebidasSugeridas.find(x => x.id === id);
+        if (!b) return;
+        const atual = carrinho.find(item => item.id === id);
+        atual ? atual.quantidade++ : carrinho.push({ id: b.id, nome: b.nome, preco: b.preco, quantidade: 1, observacao: '', categoria: 'BEBIDA' });
+        render();
+    }
+    // Sugere outras bebidas ainda não adicionadas ao carrinho (exceto o próprio item)
+    function sugestoesPara(item) {
+        return bebidasSugeridas.filter(b => b.id !== item.id && !carrinho.some(i => i.id === b.id));
+    }
+    function renderItem(i) {
+        let linhaExtra = '';
+        if (i.categoria === 'BEBIDA') {
+            const sugestoes = sugestoesPara(i);
+            if (sugestoes.length) {
+                linhaExtra = '<div class="mt-2"><span class="text-muted small me-2">Que tal também?</span>'
+                    + sugestoes.map(b => `<button type="button" class="btn btn-sm btn-outline-primary sugestao-chip me-1 mb-1" onclick="adicionarSugestao(${b.id})"><i class="fa-solid fa-plus me-1"></i>${escHtml(b.nome)} · R$ ${dinheiro(b.preco)}</button>`).join('')
+                    + '</div>';
+            }
+        } else {
+            linhaExtra = `<input class="form-control form-control-sm mt-2" type="text" placeholder="Observação deste prato (ex.: sem cebola)" value="${escAttr(i.observacao)}" oninput="editarObservacao(${i.id}, this.value)">`;
+        }
+        return `<div class="border-bottom py-3">
+            <div class="d-flex justify-content-between align-items-center gap-3">
+                <div><strong>${escHtml(i.nome)}</strong><div class="text-muted small">R$ ${dinheiro(i.preco)} cada</div></div>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="alterar(${i.id},-1)" aria-label="Diminuir">-</button>
+                    <span>${i.quantidade}</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="alterar(${i.id},1)" aria-label="Aumentar">+</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="remover(${i.id})" aria-label="Remover"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+            ${linhaExtra}
+        </div>`;
+    }
+    function renderTotais(subtotal) {
+        document.getElementById('cartSubtotal').textContent = 'R$ ' + dinheiro(subtotal);
+        document.getElementById('cartTaxa').textContent = 'R$ ' + dinheiro(taxaEntrega);
+        const linhaDesconto = document.getElementById('linhaDesconto');
+        if (descontoCupom > 0) {
+            linhaDesconto.style.display = '';
+            document.getElementById('cartDesconto').textContent = '- R$ ' + dinheiro(descontoCupom);
+        } else {
+            linhaDesconto.style.display = 'none';
+        }
+        const total = Math.max(0, subtotal + taxaEntrega - descontoCupom);
+        document.getElementById('cartTotal').textContent = 'R$ ' + dinheiro(total);
+    }
+    function render() {
+        let subtotal = 0;
+        const box = document.getElementById('cartItems');
+        if (!carrinho.length) {
+            box.innerHTML = '<p class="text-muted mb-0">Seu carrinho está vazio. <a href="/site">Voltar ao cardápio</a></p>';
+            subtotalAtual = 0;
+            renderTotais(0);
+            salvar();
+            return;
+        }
+        box.innerHTML = carrinho.map(i => { subtotal += i.preco * i.quantidade; return renderItem(i); }).join('');
+        subtotalAtual = subtotal;
+        renderTotais(subtotal);
+        salvar();
+    }
+    // Consulta a taxa de entrega pelo CEP (preenche rua/bairro quando o cliente não tem endereço salvo)
+    function calcularEntrega() {
+        const cep = (document.getElementById('cep').value || '').replace(/\D/g, '');
+        const el = document.getElementById('entregaResultado');
+        if (cep.length !== 8) {
+            el.innerHTML = '<span class="text-danger">Informe um CEP válido (8 dígitos).</span>';
+            taxaEntrega = 0; entregaInfo = null; renderTotais(subtotalAtual);
+            return;
+        }
+        el.innerHTML = '<span class="text-muted">Calculando…</span>';
+        fetch('/site/entrega/consultar?cep=' + encodeURIComponent(cep))
+            .then(r => r.json())
+            .then(d => {
+                if (d && d.sucesso && d.dentroDaArea) {
+                    taxaEntrega = Number(d.valorEntrega) || 0;
+                    entregaInfo = d;
+                    const extras = [];
+                    if (d.tempoEntrega) extras.push(escHtml(d.tempoEntrega));
+                    if (d.bairroAplicado) extras.push(escHtml(d.bairroAplicado));
+                    el.innerHTML = '<span class="text-success">Entrega: R$ ' + dinheiro(taxaEntrega) + (extras.length ? ' · ' + extras.join(' · ') : '') + '</span>';
+                    if (!document.getElementById('rua').value && d.logradouro) document.getElementById('rua').value = d.logradouro;
+                    if (!document.getElementById('bairro').value && d.bairro) document.getElementById('bairro').value = d.bairro;
+                } else {
+                    taxaEntrega = 0; entregaInfo = null;
+                    el.innerHTML = '<span class="text-danger">' + escHtml((d && d.mensagem) || 'Não atendemos essa região.') + '</span>';
+                }
+                renderTotais(subtotalAtual);
+                if (cupomCodigo) aplicarCupom();
+            })
+            .catch(() => {
+                taxaEntrega = 0; entregaInfo = null;
+                el.innerHTML = '<span class="text-danger">Erro ao consultar o CEP. Tente novamente.</span>';
+                renderTotais(subtotalAtual);
+            });
+    }
+    function aplicarCupom() {
+        const el = document.getElementById('cupomResultado');
+        const codigo = (document.getElementById('cupomInput').value || '').trim();
+        if (!codigo) { el.innerHTML = '<span class="text-danger">Digite o código do cupom.</span>'; return; }
+        if (!carrinho.length) { el.innerHTML = '<span class="text-danger">Adicione itens ao carrinho primeiro.</span>'; return; }
+        const retirada = document.getElementById('optRetirada').checked;
+        const cep = (document.getElementById('cep').value || '').replace(/\D/g, '');
+        el.innerHTML = '<span class="text-muted">Verificando…</span>';
+        fetch('/site/cupom/validar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', [csrfHeader]: csrfToken },
+            body: new URLSearchParams({ codigo: codigo, carrinhoJson: JSON.stringify(carrinho), tipoPedido: retirada ? 'RETIRADA' : 'DELIVERY', cep: cep })
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d && d.sucesso) {
+                descontoCupom = Number(d.desconto) || 0;
+                cupomCodigo = d.codigo || codigo;
+                document.getElementById('cupomInput').value = cupomCodigo;
+                localStorage.setItem('cupomPublico', JSON.stringify({ codigo: cupomCodigo, desconto: descontoCupom }));
+                el.innerHTML = '<span class="text-success">Cupom aplicado: -R$ ' + dinheiro(descontoCupom) + '</span>';
+                renderTotais(subtotalAtual);
+            } else {
+                descontoCupom = 0; cupomCodigo = '';
+                localStorage.removeItem('cupomPublico');
+                el.innerHTML = '<span class="text-danger">' + escHtml((d && d.mensagem) || 'Cupom inválido.') + '</span>';
+                renderTotais(subtotalAtual);
+            }
+        })
+        .catch(() => { el.innerHTML = '<span class="text-danger">Erro ao verificar o cupom.</span>'; });
+    }
+    function atualizarModoRecebimento() {
+        const entrega = document.getElementById('optEntrega').checked;
+        document.getElementById('painelEntrega').style.display = entrega ? '' : 'none';
+        document.getElementById('painelRetirada').style.display = entrega ? 'none' : '';
+        if (!entrega) { taxaEntrega = 0; entregaInfo = null; }
+        renderTotais(subtotalAtual);
+        if (cupomCodigo) aplicarCupom();
+    }
+    document.querySelectorAll('input[name="tipoRecebimento"]').forEach(r => r.addEventListener('change', atualizarModoRecebimento));
+    function irParaPagamento() {
+        if (!carrinho.length) { alert('Adicione pelo menos um prato.'); return; }
+        const retirada = document.getElementById('optRetirada').checked;
+        const entregaPublico = { tipoPedido: retirada ? 'RETIRADA' : 'DELIVERY' };
+        if (!retirada) {
+            const cep = (document.getElementById('cep').value || '').replace(/\D/g, '');
+            if (cep.length !== 8) { alert('Informe um CEP válido para calcular a entrega.'); return; }
+            const rua = document.getElementById('rua').value.trim();
+            const numero = document.getElementById('numero').value.trim();
+            const bairro = document.getElementById('bairro').value.trim();
+            if (!rua || !numero || !bairro) { alert('Preencha rua, número e bairro para a entrega.'); return; }
+            if (entregaInfo == null) { alert('Calcule a entrega pelo CEP antes de finalizar.'); return; }
+            entregaPublico.cep = cep;
+            entregaPublico.rua = rua;
+            entregaPublico.numero = numero;
+            entregaPublico.bairro = bairro;
+            entregaPublico.complemento = document.getElementById('complemento').value.trim();
+            entregaPublico.taxaEntrega = taxaEntrega;
+            entregaPublico.tempoEntrega = entregaInfo.tempoEntrega || '';
+        }
+        localStorage.setItem('observacoesPublico', (document.getElementById('observacoes') || {}).value || '');
+        localStorage.setItem('entregaPublico', JSON.stringify(entregaPublico));
+        window.location.href = '/site/pagamento';
+    }
+    render();
+    (function restaurarCupom() {
+        try {
+            const salvo = JSON.parse(localStorage.getItem('cupomPublico') || 'null');
+            if (salvo && salvo.codigo && carrinho.length) {
+                document.getElementById('cupomInput').value = salvo.codigo;
+                aplicarCupom();
+            }
+        } catch (e) {}
+    })();
+</script>
+<th:block th:replace="~{publico/fragments/ajuda-whatsapp :: botao}"></th:block>
+<script th:src="@{/js/publico.js}"></script>
+</body>
+</html>

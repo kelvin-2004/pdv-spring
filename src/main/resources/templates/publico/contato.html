@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marmitas Sousa | Contato</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%2363452C' d='M256 32c125.7 0 228 102.3 228 228s-102.3 228-228 228S28 385.7 28 260 130.3 32 256 32zm0 64c-92.8 0-164 71.2-164 164s71.2 164 164 164 164-71.2 164-164-71.2-164-164-164z'/%3E%3Cpath fill='%23F6D32D' d='M176 220h160v64H176z'/%3E%3C/svg%3E">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/publico.css}">
+    <style>
+        :root { --primaria:#63452C; --secundaria:#F6D32D; --fundo:#F6F5F4; }
+        body { background:var(--fundo); color:#332a26; }
+        .navbar-custom { background:var(--primaria); }
+        .navbar-custom .nav-link, .navbar-custom .navbar-brand { color:#fff; }
+        .navbar-custom .nav-link:hover { color:var(--secundaria); }
+        .logo { width:42px; height:42px; border-radius:50%; border:2px solid var(--secundaria); object-fit:cover; }
+        .footer-custom { background:var(--primaria); color:#f0e6d8; }
+        .btn-marmita { background:var(--secundaria); color:var(--primaria); font-weight:700; border:0; }
+        .btn-marmita:hover { background:#e0be23; color:var(--primaria); }
+        .hero { background:linear-gradient(120deg, #63452C, #8a603e); color:#fff; border-radius:0 0 24px 24px; }
+        .card-soft { border:0; border-radius:14px; box-shadow:0 8px 22px rgba(99,69,44,.08); }
+        .icon-badge { width:48px; height:48px; border-radius:12px; background:var(--secundaria); color:var(--primaria); display:grid; place-items:center; font-size:1.2rem; }
+    </style>
+</head>
+<body>
+<th:block th:replace="~{publico/fragments/navbar-publico :: nav(active='contato')}"></th:block>
+
+<section class="hero py-5 mb-4">
+    <div class="container py-2">
+        <h1 class="display-6 fw-bold">Fale com a gente</h1>
+        <p class="lead mb-0">Pedidos, dúvidas e suporte — estamos por aqui.</p>
+    </div>
+</section>
+
+<main class="container pb-5">
+    <div class="row g-4 justify-content-center">
+        <div class="col-lg-6">
+            <div class="card card-soft h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex gap-3 mb-4">
+                        <div class="icon-badge"><i class="fa-solid fa-location-dot"></i></div>
+                        <div>
+                            <h2 class="h5 fw-bold mb-1">Endereço</h2>
+                            <p class="mb-1">R. Quinze, 292 - Jardim Vassouras</p>
+                            <p class="mb-0 text-muted">Francisco Morato - SP, 07953-170</p>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <div class="icon-badge"><i class="fa-brands fa-whatsapp"></i></div>
+                        <div>
+                            <h2 class="h5 fw-bold mb-1">WhatsApp (pedidos e suporte)</h2>
+                            <p class="mb-0">
+                                <a class="text-decoration-none fw-semibold" href="https://wa.me/5511961659359" target="_blank" rel="noopener" style="color:var(--primaria);">(11) 9 6165-9359</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card card-soft h-100">
+                <div class="card-body p-4 d-flex flex-column align-items-center justify-content-center text-center">
+                    <p class="text-muted mb-3">Prefere falar direto com a gente?</p>
+                    <a class="btn btn-marmita btn-lg px-4" href="https://wa.me/5511961659359?text=Ol%C3%A1!%20Vim%20pelo%20site." target="_blank" rel="noopener">
+                        <i class="fa-brands fa-whatsapp me-2"></i> Chamar no WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="footer-custom mt-5">
+    <div class="container py-4 d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3">
+        <span class="small opacity-75">Criado por <a class="text-reset text-decoration-none" href="https://github.com/kelvin-2004" target="_blank" rel="noopener"><i class="fa-brands fa-github me-1"></i>Kelvin</a></span>
+        <div class="d-flex gap-2">
+            <a class="btn btn-marmita" href="https://wa.me/5511961659359?text=Ol%C3%A1!%20Preciso%20de%20suporte." target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp me-1"></i> Suporte</a>
+            <a class="btn btn-outline-light" href="https://wa.me/5511961659359?text=Ol%C3%A1!%20Tenho%20uma%20d%C3%BAvida." target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp me-1"></i> Dúvidas</a>
+            <a class="btn btn-outline-light" href="https://www.instagram.com/marmitas_sousa_morato/" target="_blank" rel="noopener"><i class="fa-brands fa-instagram me-1"></i> Instagram</a>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const carrinho = JSON.parse(localStorage.getItem('carrinhoPublico') || '[]');
+    document.getElementById('navCartCount').textContent = carrinho.reduce((t, i) => t + i.quantidade, 0);
+</script>
+<script th:src="@{/js/publico.js}"></script>
+</body>
+</html>

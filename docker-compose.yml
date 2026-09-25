@@ -1,0 +1,56 @@
+# ============================================================
+# Docker Compose — Marmitas Sousa (app Spring Boot + MySQL)
+#
+# Uso (no servidor, dentro da pasta do projeto, com o .env.production presente):
+#   docker compose up -d --build
+#
+# Primeira subida: as tabelas são criadas automaticamente (ddl-auto=update).
+# Depois que subir a primeira vez, troque SPRING_JPA_HIBERNATE_DDL_AUTO abaixo
+# para "validate" (mais seguro em produção).
+# ============================================================
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: pdv-mysql
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    # Descomente para acessar o MySQL de fora do container (ex.: MySQL Workbench):
+    # ports:
+    #   - "3306:3306"
+
+  app:
+    build: .
+    container_name: pdv-app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    env_file:
+      - .env.production
+    environment:
+      # Perfil de produção (usa application-prod.properties + .env.production).
+      SPRING_PROFILES_ACTIVE: prod
+      # "update" cria/atualiza as tabelas; troque para "validate" após a 1ª subida.
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      # Fuso horário do Brasil.
+      TZ: America/Sao_Paulo
+      IMPRESSAO_MODO: ponte
+    ports:
+      - "8080:8080"
+    volumes:
+      # Persiste as fotos de produto mesmo se o container for recriado.
+      - uploads:/app/uploads
+
+volumes:
+  mysql-data:
+  uploads:

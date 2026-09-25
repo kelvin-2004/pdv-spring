@@ -15,37 +15,34 @@ public class produtoService {
     @Autowired
     private produtoRepository produtoRepo;
 
-    // 1. Cadastrar ou atualizar um produto no estoque
     public produtos salvarProduto(produtos produto) {
         return produtoRepo.save(produto);
     }
 
-    // 2. Listar TODOS os produtos (ativos e inativos)
     public List<produtos> listarTodos() {
         return produtoRepo.findAll();
     }
 
-    // 3. Listar apenas os produtos ativos
     public List<produtos> listarAtivos() {
         return produtoRepo.findByAtivoTrue();
     }
 
-    // 4. Filtrar produtos por categoria e ativos
     public List<produtos> listarPorCategoria(categoriaPedido categoria) {
         return produtoRepo.findByCategoriaPedidoAndAtivoTrue(categoria);
     }
 
-    // 5. Buscar produto por ID
     public Optional<produtos> buscarPorId(Long id) {
         return produtoRepo.findById(id);
     }
 
-    // 6. Buscar produtos por parte do nome
     public List<produtos> buscarPorNome(String nome) {
         return produtoRepo.findByNomeContainingIgnoreCase(nome);
     }
 
-    // 7. Ativar ou desativar produto
+    public List<produtos> buscarAtivosPorNome(String nome) {
+        return produtoRepo.findByNomeContainingIgnoreCaseAndAtivoTrue(nome);
+    }
+
     public produtos alterarStatusAtivo(Long id, boolean status) {
         Optional<produtos> produtoOptional = produtoRepo.findById(id);
 

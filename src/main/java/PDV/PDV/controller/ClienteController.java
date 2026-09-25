@@ -27,7 +27,7 @@
             model.addAttribute("clientes", clientes);
             model.addAttribute("novoCliente", new clientes());
             model.addAttribute("termoBusca", termo);
-            return "clientes/lista"; // Aponta para src/main/resources/templates/clientes/lista.html
+            return "clientes/lista";
         }
 
         @PostMapping("/salvar")

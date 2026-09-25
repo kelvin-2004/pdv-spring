@@ -19,7 +19,6 @@ public class DataInitializer {
             itensPedidoRepository itensPedidoRepository) {
 
         return args -> {
-            // Script desativado para não inserir dados fakes.
         };
     }
 }

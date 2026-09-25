@@ -9,15 +9,13 @@ import java.util.Optional;
 
 public interface produtoRepository extends JpaRepository<produtos, Long> {
 
-    // Busca todos os produtos ativos
     List<produtos> findByAtivoTrue();
 
-    // Busca exata por nome
     Optional<produtos> findByNome(String nome);
 
-    // Busca por parte do nome (ignorando maiúsculas/minúsculas)
     List<produtos> findByNomeContainingIgnoreCase(String nome);
 
-    // Busca produtos ativos por categoria
+    List<produtos> findByNomeContainingIgnoreCaseAndAtivoTrue(String nome);
+
     List<produtos> findByCategoriaPedidoAndAtivoTrue(categoriaPedido categoria);
 }

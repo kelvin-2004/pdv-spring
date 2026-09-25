@@ -1,0 +1,29 @@
+# Artefatos de build e VCS
+target/
+.git/
+.gitignore
+.idea/
+.vscode/
+*.iml
+*.log
+logs/
+
+# Segredos locais — nunca vão para a imagem
+.env
+.env.*
+!.env.example
+
+# Fotos de dev (viram volume no container; não devem ir para a imagem)
+uploads/
+
+# Arquivos de deploy/dev que não fazem parte da imagem
+run-dev.sh
+DEPLOY.md
+README.md
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Maven wrapper (a imagem de build usa o Maven próprio)
+mvnw
+.mvn/

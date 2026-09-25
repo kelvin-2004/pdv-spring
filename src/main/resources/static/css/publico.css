@@ -1,0 +1,103 @@
+/* ============================================================
+   Marmitas Sousa — refinamentos visuais do site público.
+   Efeitos leves e aditivos: transições, sombras e animações
+   usando apenas transform/opacity (barato no mobile).
+   Nada aqui altera o layout, as cores ou a estrutura existentes.
+   ============================================================ */
+
+/* Transição suave e uniforme em elementos interativos */
+a, button, .btn, .form-control, .form-select, .pay-tab, .sugestao-chip {
+    transition: color .18s ease, background-color .18s ease, border-color .18s ease,
+                box-shadow .18s ease, transform .18s ease, opacity .18s ease;
+}
+
+/* Fade-in sutil da página ao carregar */
+body { animation: msFadeIn .45s ease both; }
+@keyframes msFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Cartões: elevação suave + sombra mais presente ao passar o mouse */
+.card { transition: transform .22s ease, box-shadow .22s ease; }
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 38px rgba(99, 69, 44, .16);
+}
+
+/* Botões primários: leve elevação no hover */
+.btn-marmita:hover, .btn-m:hover { transform: translateY(-2px); }
+
+/* Botões: feedback de "apertar" (definido depois do hover para vencer) */
+.btn:active, .btn-marmita:active, .btn-m:active { transform: scale(.96); }
+
+/* Zoom suave na imagem do produto */
+.product-card .product-image { transition: transform .45s ease; }
+.product-card:hover .product-image { transform: scale(1.07); }
+
+/* Botão flutuante do carrinho: flutuação gentil */
+.cart-float { animation: msFloat 3s ease-in-out infinite; }
+@keyframes msFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+}
+
+/* Abas de pagamento: leve elevação ao passar o mouse */
+.pay-tab:hover { transform: translateY(-2px); }
+
+/* Foco de formulário com a cor da marca (bom no mobile) */
+.form-control:focus, .form-select:focus {
+    border-color: #63452C;
+    box-shadow: 0 0 0 .25rem rgba(246, 211, 45, .28);
+}
+
+/* Barra de navegação: sombra suave ao rolar (classe adicionada via JS) */
+.navbar-custom.sticky-top { transition: box-shadow .25s ease; }
+.navbar-custom.sticky-top.ms-nav-scrolled { box-shadow: 0 4px 18px rgba(0, 0, 0, .20); }
+
+/* Reveal-on-scroll: classes gerenciadas pelo publico.js */
+.ms-reveal { opacity: 0; transform: translateY(20px); transition: opacity .55s ease, transform .55s ease; }
+.ms-reveal.ms-revealed { opacity: 1; transform: none; }
+
+/* Respeita quem prefere menos movimento */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+    }
+    .ms-reveal { opacity: 1 !important; transform: none !important; }
+}
+
+/* ============================================================
+   Chat do pedido (cliente <-> loja)
+   ============================================================ */
+.chat-ms { display: flex; flex-direction: column; height: 420px; border-radius: 14px; overflow: hidden; }
+
+.chat-ms-mensagens {
+    flex: 1; overflow-y: auto; padding: 14px 12px;
+    background: #faf6f0; display: flex; flex-direction: column; gap: 8px;
+}
+
+.chat-ms-balao {
+    max-width: 80%; padding: 9px 13px; border-radius: 16px; font-size: .92rem;
+    line-height: 1.35; word-wrap: break-word; box-shadow: 0 2px 6px rgba(0, 0, 0, .06);
+    animation: msChatIn .22s ease both;
+}
+@keyframes msChatIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.chat-ms-cliente { align-self: flex-end; background: #63452C; color: #fff; border-bottom-right-radius: 4px; }
+.chat-ms-loja { align-self: flex-start; background: #fff; color: #3d2b1f; border: 1px solid #eadfce; border-bottom-left-radius: 4px; }
+
+.chat-ms-hora { display: block; font-size: .68rem; opacity: .62; margin-top: 3px; }
+.chat-ms-cliente .chat-ms-hora { text-align: right; color: #fff; }
+
+.chat-ms-vazio { align-self: center; margin: auto; color: #9a8a78; font-size: .9rem; text-align: center; padding: 0 18px; }
+
+.chat-ms-rodape { display: flex; gap: 8px; padding: 10px; background: #fff; border-top: 1px solid #eee4d6; }
+.chat-ms-rodape input { flex: 1; border-radius: 999px; border: 1px solid #e3d6c4; padding: 9px 16px; }
+.chat-ms-rodape input:focus { outline: none; border-color: #63452C; box-shadow: 0 0 0 .2rem rgba(246, 211, 45, .22); }
+
+.chat-ms-badge {
+    position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px;
+    padding: 0 5px; border-radius: 999px; background: #d62b2b; color: #fff;
+    font-size: .72rem; font-weight: 700; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 5px rgba(214, 43, 43, .45);
+}

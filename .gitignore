@@ -36,3 +36,10 @@ build/
 .env
 .env.*
 !.env.example
+
+# Logs gerados em tempo de execução
+logs/
+*.log
+
+# Fotos de produto enviadas em tempo de execução
+uploads/

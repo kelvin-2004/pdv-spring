@@ -7,8 +7,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -24,6 +24,22 @@ public class produtoController {
     private produtoRepository produtoRepository;
 
     private static final String UPLOAD_DIR = "uploads/";
+
+    private static String sanitizarNomeArquivo(String nome) {
+        if (nome == null || nome.isBlank()) return "arquivo";
+        String base = nome.replace('\\', '/');
+        int idx = base.lastIndexOf('/');
+        if (idx >= 0) base = base.substring(idx + 1);
+        base = base.replaceAll("[^a-zA-Z0-9._-]", "_");
+        base = base.replaceAll("^[._-]+", "");
+        if (base.length() > 80) {
+            String ext = "";
+            int dot = base.lastIndexOf('.');
+            if (dot > 0) { ext = base.substring(dot); base = base.substring(0, dot); }
+            base = base.substring(0, Math.min(base.length(), 60)) + ext;
+        }
+        return base.isBlank() ? "arquivo" : base;
+    }
 
     @GetMapping
     public String listarProdutos(@RequestParam(value = "nome", required = false) String nomeBusca, Model model) {
@@ -47,7 +63,8 @@ public class produtoController {
 
     @PostMapping("/salvar")
     public String salvarProduto(@ModelAttribute produtos produto,
-                                @RequestParam(value = "file", required = false) MultipartFile file) {
+                                @RequestParam(value = "file", required = false) MultipartFile file,
+                                RedirectAttributes redirectAttributes) {
         try {
             if (file != null && !file.isEmpty()) {
                 Path caminhoDiretorio = Paths.get(UPLOAD_DIR);
@@ -56,7 +73,7 @@ public class produtoController {
                     Files.createDirectories(caminhoDiretorio);
                 }
 
-                String nomeArquivo = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+                String nomeArquivo = System.currentTimeMillis() + "_" + sanitizarNomeArquivo(file.getOriginalFilename());
                 Path caminhoCompleto = caminhoDiretorio.resolve(nomeArquivo);
 
                 Files.copy(file.getInputStream(), caminhoCompleto, StandardCopyOption.REPLACE_EXISTING);
@@ -66,10 +83,16 @@ public class produtoController {
                 produtoExistente.ifPresent(p -> produto.setImgUrl(p.getImgUrl()));
             }
 
-            produtoRepository.save(produto);
+            if (produto.getImgUrl() == null || produto.getImgUrl().isBlank()) {
+                produto.setImgUrl("/img/logo.png");
+            }
 
-        } catch (IOException e) {
-            e.printStackTrace();
+            produtoRepository.save(produto);
+            redirectAttributes.addFlashAttribute("sucesso", "Produto salvo com sucesso!");
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("erro",
+                    "Não foi possível salvar o produto: " + (e.getMessage() != null ? e.getMessage() : "erro desconhecido"));
         }
 
         return "redirect:/produtos";

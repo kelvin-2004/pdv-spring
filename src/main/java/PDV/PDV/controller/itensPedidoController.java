@@ -17,7 +17,6 @@ public class itensPedidoController {
     @Autowired
     private itensPedidoService itensPedidoService;
 
-    // Exemplo de método auxiliar para buscar itens por ID do pedido
     @GetMapping("/pedido/{pedidoId}")
     public List<itensPedido> listarPorPedido(@PathVariable Long pedidoId) {
         return itensPedidoService.listarPorPedido(pedidoId);

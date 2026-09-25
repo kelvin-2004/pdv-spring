@@ -19,14 +19,15 @@ public class produtos {
     @Column(nullable = false)
     private  String nome;
     private String descricao;
+    private String subcategoria;
     @Column(nullable = false)
     private BigDecimal preco;
-    @Column(name = "categoria", nullable = false)
+    @Column(name = "categoria", nullable = false, columnDefinition = "varchar(50)")
     @Enumerated(EnumType.STRING)
     private categoriaPedido CategoriaPedido;
     @Column(name = "disponivel")
     private Boolean ativo = true;
-    @Column(name = "caminhoImg", nullable = false)
+    @Column(name = "caminhoImg")
     private String imgUrl;
     @Column(nullable = false)
     private Integer estoque = 0;

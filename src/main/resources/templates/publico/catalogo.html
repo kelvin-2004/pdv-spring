@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marmitas Sousa | Cardápio</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%2363452C' d='M256 32c125.7 0 228 102.3 228 228s-102.3 228-228 228S28 385.7 28 260 130.3 32 256 32zm0 64c-92.8 0-164 71.2-164 164s71.2 164 164 164 164-71.2 164-164-71.2-164-164-164z'/%3E%3Cpath fill='%23F6D32D' d='M176 220h160v64H176z'/%3E%3C/svg%3E">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/publico.css}">
+    <style>
+        :root { --primaria:#63452C; --secundaria:#F6D32D; --fundo:#F6F5F4; }
+        body { background:var(--fundo); color:#332a26; }
+        .camada { border-radius:18px; padding:1.25rem 1.25rem 0.5rem; margin-bottom:1rem; }
+        .camada-clara { background:var(--secundaria); box-shadow: inset 0 0 0 1px rgba(99,69,44,.18); }
+        .camada-escura { background:#8a603e; }
+        .camada-azul { background:#3b82f6; box-shadow: inset 0 0 0 1px rgba(30,64,175,.35); }
+        .navbar-custom { background:var(--primaria); }
+        .navbar-custom .nav-link, .navbar-custom .navbar-brand { color:#fff; }
+        .navbar-custom .nav-link:hover { color:var(--secundaria); }
+        .footer-custom { background:var(--primaria); color:#f0e6d8; }
+        .logo { width:42px; height:42px; border-radius:50%; border:2px solid var(--secundaria); object-fit:cover; }
+        .hero { background:linear-gradient(120deg, #63452C, #8a603e); color:#fff; border-radius:0 0 24px 24px; position:relative; overflow:hidden; }
+        .hero-video { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+        .hero-overlay { position:absolute; inset:0; background:rgba(55,36,20,0.55); z-index:1; }
+        .product-card { border:0; border-radius:14px; overflow:hidden; box-shadow:0 8px 22px rgba(99,69,44,.08); height:100%; }
+        .product-image { height:190px; object-fit:cover; background:#eee7df; }
+        .product-placeholder { height:190px; display:grid; place-items:center; background:#eee7df; color:var(--primaria); font-size:3rem; }
+        .btn-marmita { background:var(--secundaria); color:var(--primaria); font-weight:700; border:0; }
+        .btn-marmita:hover { background:#e0be23; color:var(--primaria); }
+        .cart-float { position:fixed; right:20px; bottom:20px; width:60px; height:60px; border-radius:50%; background:var(--secundaria); color:var(--primaria); display:flex; align-items:center; justify-content:center; font-size:1.5rem; box-shadow:0 8px 24px rgba(0,0,0,.25); z-index:1070; text-decoration:none; }
+        .cart-float:hover { background:#e0be23; color:var(--primaria); }
+        .cart-float .badge { position:absolute; top:-4px; right:-4px; font-size:.7rem; }
+        .toast-container { z-index:1080; }
+        @media (max-width: 575.98px) {
+            .hero h1 { font-size:1.8rem; }
+            .hero p { font-size:1rem; }
+            .d-flex.justify-content-between.align-items-center.mb-3 { align-items:stretch !important; flex-direction:column; gap:.75rem; }
+            .d-flex.justify-content-between.align-items-center.mb-3 form { width:100%; }
+            .d-flex.justify-content-between.align-items-center.mb-3 form .form-select { max-width:110px; }
+        }
+    </style>
+</head>
+<body>
+<th:block th:replace="~{publico/fragments/navbar-publico :: nav(active='cardapio')}"></th:block>
+<section class="hero py-5 mb-4">
+    <video class="hero-video" autoplay muted loop playsinline aria-hidden="true">
+        <source th:src="@{/video/185c5tvhzdrmy0d0n0ys1sgacc_result_.mp4}" type="video/mp4">
+    </video>
+    <div class="hero-overlay"></div>
+    <div class="container py-3" style="position:relative; z-index:2;">
+        <h1 class="display-6 fw-bold">Peça a melhor marmita de Francisco Morato e região</h1>
+        <p class="lead mb-0">Marmitas caseiras com entrega rápida e retirada no balcão. Faça seu pedido online.</p>
+    </div>
+</section>
+<main class="container pb-5">
+    <div th:if="${!lojaAberta}" class="alert alert-warning d-flex align-items-center gap-2" role="alert">
+        <i class="fa-solid fa-store-slash me-1"></i>
+        <span>A loja está fechada no momento. <span th:text="${lojaStatus}">Abre amanhã às 10:00</span>.</span>
+    </div>
+    <div th:if="${sucesso}" class="alert alert-success" th:text="${sucesso}"></div>
+    <div th:if="${erro}" class="alert alert-danger" th:text="${erro}"></div>
+    <div th:if="${param.pago}" class="alert alert-success">Pagamento confirmado! Seu pedido já foi enviado para a cozinha. Obrigado! 🍽️</div>
+    <div class="row g-4">
+        <section class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h4 fw-bold mb-0">Nosso cardápio</h2>
+                <form class="d-flex gap-2" method="get" th:action="@{/site}">
+                    <input class="form-control" name="busca" th:value="${busca}" placeholder="Buscar prato">
+                    <select class="form-select" name="subcategoria" aria-label="Filtrar por subcategoria">
+                        <option value="">Todas</option>
+                        <option th:each="item : ${subcategorias}" th:value="${item}" th:text="${item}" th:selected="${item == subcategoria}"></option>
+                    </select>
+                    <button class="btn btn-marmita ms-2" aria-label="Buscar"><i class="fa-solid fa-search"></i></button>
+                </form>
+            </div>
+            <div th:each="catEntry : ${agrupados}" class="mb-4">
+                <h3 class="h5 fw-bold text-uppercase mb-3 pb-2" style="color: var(--primaria); border-bottom: 2px solid var(--secundaria);" th:text="${catEntry.key.label}">Categoria</h3>
+                <section th:each="secao : ${catEntry.value}" class="camada" th:classappend="${secao.bebida} ? 'camada-azul' : (${secao.escuro} ? 'camada-escura' : 'camada-clara')">
+                    <h4 th:if="${secao.nome != 'Geral'}" class="h6 fw-semibold mb-3" th:classappend="${(secao.escuro or secao.bebida)} ? 'text-white' : 'text-dark'" th:text="${secao.nome}">Subcategoria</h4>
+                    <div class="row g-3">
+                        <div class="col-md-6" th:each="produto : ${secao.produtos}">
+                            <article class="card product-card">
+                                <img th:if="${produto.imgUrl != null and !produto.imgUrl.isBlank()}" class="product-image w-100" th:src="${produto.imgUrl}" th:alt="${produto.nome}">
+                                <div th:unless="${produto.imgUrl != null and !produto.imgUrl.isBlank()}" class="product-placeholder"><i class="fa-solid fa-bowl-food"></i></div>
+                                <div class="card-body d-flex flex-column">
+                                    <h3 class="h5 fw-bold" th:text="${produto.nome}">Prato</h3>
+                                    <p class="text-muted small flex-grow-1" th:text="${produto.descricao}">Descrição do prato</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <strong class="text-success fs-5" th:text="${'R$ ' + #numbers.formatDecimal(produto.preco, 1, 2, 'COMMA')}">R$ 0,00</strong>
+                                        <button type="button" class="btn btn-marmita" onclick="adicionar(this)" th:disabled="${!lojaAberta}" th:attr="data-id=${produto.id}, data-nome=${produto.nome}, data-preco=${produto.preco}, data-categoria=${produto.categoriaPedido}"><i class="fa-solid fa-plus me-1"></i>Adicionar</button>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <div class="col-12 text-center text-muted py-5" th:if="${#lists.isEmpty(produtos)}">Nenhum prato encontrado.</div>
+        </section>
+    </div>
+</main>
+
+<footer class="footer-custom mt-5">
+    <div class="container py-4 d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3">
+        <span class="small opacity-75">Criado por <a class="text-reset text-decoration-none" href="https://github.com/kelvin-2004" target="_blank" rel="noopener"><i class="fa-brands fa-github me-1"></i>Kelvin</a></span>
+        <div class="d-flex gap-2">
+            <a class="btn btn-marmita" href="https://wa.me/5511961659359?text=Ol%C3%A1!%20Preciso%20de%20suporte." target="_blank" rel="noopener">
+                <i class="fa-brands fa-whatsapp me-1"></i> Suporte
+            </a>
+            <a class="btn btn-outline-light" href="https://wa.me/5511961659359?text=Ol%C3%A1!%20Tenho%20uma%20d%C3%BAvida." target="_blank" rel="noopener">
+                <i class="fa-brands fa-whatsapp me-1"></i> Dúvidas
+            </a>
+            <a class="btn btn-outline-light" href="https://www.instagram.com/marmitas_sousa_morato/" target="_blank" rel="noopener">
+                <i class="fa-brands fa-instagram me-1"></i> Instagram
+            </a>
+        </div>
+    </div>
+</footer>
+
+<a th:href="@{/site/carrinho}" class="cart-float" title="Abrir carrinho" aria-label="Abrir carrinho">
+    <i class="fa-solid fa-cart-shopping"></i>
+    <span class="badge rounded-pill text-bg-warning" id="floatCartCount">0</span>
+</a>
+
+<div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="produtoAdicionadoToast" class="toast" role="status" aria-live="polite" aria-atomic="true">
+        <div class="toast-header" style="background:var(--primaria); color:#fff;">
+            <i class="fa-solid fa-cart-shopping me-2"></i><strong class="me-auto">Carrinho atualizado</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Fechar"></button>
+        </div>
+        <div class="toast-body" id="toastMensagem">Produto adicionado ao carrinho.</div>
+    </div>
+</div>
+
+<!-- Modal de avaliação removido -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    const lojaAberta = /*[[${lojaAberta}]]*/ true;
+</script>
+<script>
+    let carrinho = JSON.parse(localStorage.getItem('carrinhoPublico') || '[]');
+    function salvarCarrinho() { localStorage.setItem('carrinhoPublico', JSON.stringify(carrinho)); }
+    function adicionar(btn) {
+        if (!lojaAberta) {
+            document.getElementById('toastMensagem').textContent = 'A loja está fechada no momento.';
+            bootstrap.Toast.getOrCreateInstance(document.getElementById('produtoAdicionadoToast'), { delay: 2600 }).show();
+            return;
+        }
+        const id = Number(btn.dataset.id);
+        const nome = btn.dataset.nome;
+        const preco = Number(btn.dataset.preco);
+        const categoria = btn.dataset.categoria || '';
+        const atual = carrinho.find(item => item.id === id);
+        atual ? atual.quantidade++ : carrinho.push({id, nome, preco, quantidade:1, observacao:'', categoria});
+        renderizarCarrinho();
+        document.getElementById('toastMensagem').textContent = `${carrinho.reduce((total, item) => total + item.quantidade, 0)} produto(s) no carrinho.`;
+        bootstrap.Toast.getOrCreateInstance(document.getElementById('produtoAdicionadoToast'), { delay: 2600 }).show();
+    }
+    function remover(id) { carrinho = carrinho.filter(item => item.id !== id); renderizarCarrinho(); }
+    function renderizarCarrinho() {
+        const qtd = carrinho.reduce((total, item) => total + item.quantidade, 0);
+        document.getElementById('navCartCount').textContent = qtd;
+        const floatBadge = document.getElementById('floatCartCount');
+        if (floatBadge) floatBadge.textContent = qtd;
+        salvarCarrinho();
+    }
+    renderizarCarrinho();
+</script>
+<script th:src="@{/js/publico.js}"></script>
+</body>
+</html>

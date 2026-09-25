@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marmitas Sousa | Meus Pedidos</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%2363452C' d='M256 32c125.7 0 228 102.3 228 228s-102.3 228-228 228S28 385.7 28 260 130.3 32 256 32zm0 64c-92.8 0-164 71.2-164 164s71.2 164 164 164 164-71.2 164-164-71.2-164-164-164z'/%3E%3Cpath fill='%23F6D32D' d='M176 220h160v64H176z'/%3E%3C/svg%3E">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/publico.css}">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <style>
+        :root { --primaria:#63452C; --secundaria:#F6D32D; --fundo:#F6F5F4; }
+        body { background:var(--fundo); color:#332a26; }
+        .navbar-custom { background:var(--primaria); }
+        .navbar-custom .nav-link, .navbar-custom .navbar-brand { color:#fff; }
+        .navbar-custom .nav-link:hover { color:var(--secundaria); }
+        .footer-custom { background:var(--primaria); color:#f0e6d8; }
+        .logo { width:42px; height:42px; border-radius:50%; border:2px solid var(--secundaria); object-fit:cover; }
+        .btn-marmita { background:var(--secundaria); color:var(--primaria); font-weight:700; border:0; }
+        .btn-marmita:hover { background:#e0be23; color:var(--primaria); }
+        .pedido-card { border:0; border-radius:14px; box-shadow:0 8px 22px rgba(99,69,44,.08); }
+    </style>
+</head>
+<body>
+<th:block th:replace="~{publico/fragments/navbar-publico :: nav(active='pedidos')}"></th:block>
+
+<main class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 fw-bold mb-0">Meus pedidos</h1>
+        <a class="btn btn-marmita" th:href="@{/site}"><i class="fa-solid fa-plus me-1"></i> Fazer novo pedido</a>
+    </div>
+
+    <div th:if="${param.pago}" class="alert alert-success d-flex align-items-center gap-2">
+        <i class="fa-solid fa-circle-check fs-5"></i>
+        <span><strong>Pagamento confirmado!</strong> Seu pedido já foi enviado para a cozinha. Acompanhe o preparo por aqui.</span>
+    </div>
+
+    <div th:if="${param.criado}" class="alert alert-success d-flex align-items-center gap-2">
+        <i class="fa-solid fa-circle-check fs-5"></i>
+        <span><strong>Pedido recebido!</strong> O pagamento será feito na entrega. Acompanhe o preparo por aqui.</span>
+    </div>
+
+    <div th:if="${sucesso}" class="alert alert-success d-flex align-items-center gap-2">
+        <i class="fa-solid fa-circle-check fs-5"></i>
+        <span th:text="${sucesso}"></span>
+    </div>
+
+    <div th:if="${erro}" class="alert alert-danger d-flex align-items-center gap-2">
+        <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+        <span th:text="${erro}"></span>
+    </div>
+
+    <div th:if="${#lists.isEmpty(pedidos)}" class="text-center text-muted py-5">
+        <i class="fa-solid fa-receipt fs-1 d-block mb-3"></i>
+        <p class="mb-3">Você ainda não fez nenhum pedido.</p>
+        <a class="btn btn-marmita" th:href="@{/site}">Ver o cardápio</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12" th:each="pedido : ${pedidos}">
+            <article class="card pedido-card mb-3">
+                <div class="card-body p-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <div>
+                            <strong class="fs-5" th:text="${'Pedido #' + (pedido.numeroPedidoCliente != null ? pedido.numeroPedidoCliente : pedido.id)}">Pedido #1</strong>
+                            <div class="text-muted small" th:text="${'Realizado em ' + #temporals.format(pedido.dataHoraLocal, 'dd/MM/yyyy às HH:mm')}">Realizado em 15/09/2026 às 18:00</div>
+                            <div class="text-muted small" th:if="${pedido.tipoPedido != null}">
+                                <i class="fa-solid" th:classappend="${pedido.tipoPedido.name() == 'RETIRADA' ? 'fa-store' : 'fa-motorcycle'}"></i>
+                                <span th:text="${pedido.tipoPedido.name() == 'RETIRADA' ? ' Retirada' : ' Entrega'}"> Entrega</span>
+                            </div>
+                        </div>
+                        <span th:switch="${pedido.statusPedido}">
+                            <span th:case="${T(PDV.PDV.model.Enum.statusPedido).AGUARDANDO_PAGAMENTO}" class="badge text-bg-warning">Aguardando pagamento</span>
+                            <span th:case="${T(PDV.PDV.model.Enum.statusPedido).PREPARANDO}" class="badge text-bg-info">Em preparo</span>
+                            <span th:case="${T(PDV.PDV.model.Enum.statusPedido).AGUARDANDO_ENTREGADOR}" class="badge text-bg-info"
+                                  th:text="${pedido.tipoPedido == T(PDV.PDV.model.Enum.tipoPedido).RETIRADA ? 'Aguardando retirada' : 'Aguardando entregador'}">Aguardando entregador</span>
+                            <span th:case="${T(PDV.PDV.model.Enum.statusPedido).A_CAMINHO}" class="badge text-bg-primary">A caminho</span>
+                            <span th:case="${T(PDV.PDV.model.Enum.statusPedido).CONCLUIDO}" class="badge text-bg-success">Concluído</span>
+                            <span th:case="${T(PDV.PDV.model.Enum.statusPedido).CANCELADO}" class="badge text-bg-danger">Cancelado</span>
+                        </span>
+                    </div>
+
+                    <!-- Endereço para retirada (apenas pedidos para retirar na loja) -->
+                    <div th:if="${pedido.tipoPedido == T(PDV.PDV.model.Enum.tipoPedido).RETIRADA}"
+                         class="rounded-3 p-3 mb-3" style="background:#fff7db; border:1px solid #f0e0a0;">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                            <div class="d-flex gap-2 align-items-start">
+                                <i class="fa-solid fa-store mt-1" style="color:#63452C;"></i>
+                                <div>
+                                    <div class="fw-semibold small">Retire seu pedido em:</div>
+                                    <div class="small" th:text="${loja.linha1}">R. Quinze, 292 - Jardim Vassouras</div>
+                                    <div class="small text-muted" th:text="${loja.linha2}">Francisco Morato - SP</div>
+                                </div>
+                            </div>
+                            <a class="btn btn-sm btn-outline-secondary" th:href="${loja.maps}" target="_blank" rel="noopener">
+                                <i class="fa-solid fa-location-arrow me-1"></i>Como chegar
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Acompanhamento do status do pedido -->
+                    <div class="mb-3">
+                        <div class="progress" style="height:8px;">
+                            <div class="progress-bar" th:style="'width:' + ${pedido.progressoStatus} + '%'"></div>
+                        </div>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mt-2 gap-2">
+                            <span class="small fw-semibold text-dark" th:text="${pedido.descricaoStatus}">Status</span>
+                            <span th:if="${pedido.statusPedido == T(PDV.PDV.model.Enum.statusPedido).PREPARANDO}"
+                                  class="badge text-bg-info prazo-publico" th:attr="data-prazo=${pedido.prazoPreparoEpochMillis}">—</span>
+                        </div>
+                    </div>
+
+                    <ul class="list-unstyled mb-3">
+                        <li th:each="item : ${pedido.itens}" class="d-flex justify-content-between align-items-start py-1">
+                            <span>
+                                <span th:text="${item.quantidade + 'x ' + item.produto.nome}">1x Marmita de Carne</span>
+                                <small class="text-muted d-block" th:if="${item.observacao != null and !item.observacao.isBlank()}" th:text="${'Obs.: ' + item.observacao}">Obs.: sem cebola</small>
+                            </span>
+                            <span class="text-muted" th:text="${'R$ ' + #numbers.formatDecimal(item.subtotal, 1, 2).replace('.', ',')}">R$ 20,00</span>
+                        </li>
+                    </ul>
+
+                    <!-- Chat com a loja -->
+                    <button type="button" class="btn btn-sm btn-outline-dark position-relative chat-toggle mb-3"
+                            th:attr="data-pedido=${pedido.id}">
+                        <i class="fa-solid fa-comments me-1"></i>Falar com a loja
+                        <span class="chat-ms-badge chat-naolidas" th:attr="data-pedido=${pedido.id}" style="display:none;">0</span>
+                    </button>
+                    <div class="chat-ms mb-3" th:attr="data-pedido=${pedido.id}" style="display:none;">
+                        <div class="chat-ms-mensagens" th:attr="data-pedido=${pedido.id}">
+                            <div class="chat-ms-vazio">Carregando conversa...</div>
+                        </div>
+                        <div class="chat-ms-rodape">
+                            <input type="text" class="chat-entrada" th:attr="data-pedido=${pedido.id}"
+                                   placeholder="Escreva sua mensagem..." maxlength="2000">
+                            <button type="button" class="btn btn-marmita btn-sm chat-enviar"
+                                    th:attr="data-pedido=${pedido.id}"><i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap justify-content-between align-items-center border-top pt-3 gap-2">
+                        <div class="text-muted small">
+                            <span th:if="${pedido.formaPagamento != null}" th:text="${'Pagamento: ' + pedido.formaPagamento}">Pagamento: PIX</span>
+                            <span th:if="${pedido.cupomCodigo != null}" class="badge text-bg-warning ms-2"
+                                  th:text="${'Cupom ' + pedido.cupomCodigo + ' · -R$ ' + #numbers.formatDecimal(pedido.desconto ?: 0, 1, 2).replace('.', ',')}">Cupom</span>
+                            <span th:if="${pedido.pago}" class="badge text-bg-success ms-2">Pago</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <strong class="fs-5" th:text="${'Total: R$ ' + #numbers.formatDecimal(pedido.valorTotal ?: 0, 1, 2).replace('.', ',')}">Total: R$ 0,00</strong>
+                            <a th:if="${pedido.statusPedido == T(PDV.PDV.model.Enum.statusPedido).AGUARDANDO_PAGAMENTO}"
+                               th:href="@{/site/pedidos/{id}/pagar(id=${pedido.id})}"
+                               class="btn btn-marmita btn-sm"><i class="fa-solid fa-qrcode me-1"></i>Pagar agora</a>
+                            <form th:if="${pedido.statusPedido == T(PDV.PDV.model.Enum.statusPedido).AGUARDANDO_PAGAMENTO or pedido.statusPedido == T(PDV.PDV.model.Enum.statusPedido).PREPARANDO}"
+                                  th:action="@{/site/pedidos/{id}/cancelar(id=${pedido.id})}" method="post" class="mb-0"
+                                  onsubmit="return confirm('Deseja realmente cancelar este pedido?');">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="fa-solid fa-xmark me-1"></i>Cancelar</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+</main>
+
+<footer class="footer-custom mt-5">
+    <div class="container py-4 d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3">
+        <span class="small opacity-75">Criado por <a class="text-reset text-decoration-none" href="https://github.com/kelvin-2004" target="_blank" rel="noopener"><i class="fa-brands fa-github me-1"></i>Kelvin</a></span>
+        <div class="d-flex gap-2">
+            <a class="btn btn-marmita" href="https://wa.me/5511961659359?text=Ol%C3%A1!%20Preciso%20de%20suporte." target="_blank" rel="noopener">
+                <i class="fa-brands fa-whatsapp me-1"></i> Suporte
+            </a>
+            <a class="btn btn-outline-light" href="https://wa.me/5511961659359?text=Ol%C3%A1!%20Tenho%20uma%20d%C3%BAvida." target="_blank" rel="noopener">
+                <i class="fa-brands fa-whatsapp me-1"></i> Dúvidas
+            </a>
+            <a class="btn btn-outline-light" href="https://www.instagram.com/marmitas_sousa_morato/" target="_blank" rel="noopener">
+                <i class="fa-brands fa-instagram me-1"></i> Instagram
+            </a>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const carrinho = JSON.parse(localStorage.getItem('carrinhoPublico') || '[]');
+    document.getElementById('navCartCount').textContent = carrinho.reduce((t, i) => t + i.quantidade, 0);
+
+    // Atualiza o tempo estimado até o pedido ficar pronto (contagem regressiva).
+    function formatarPrazoPublico(prazoMillis) {
+        if (!prazoMillis || prazoMillis <= 0) return null;
+        const restanteMs = prazoMillis - Date.now();
+        const minutos = Math.round(restanteMs / 60000);
+        if (minutos > 0) return 'Fica pronto em ~' + minutos + ' min';
+        return 'Ficando pronto agora...';
+    }
+    function atualizarPrazos() {
+        document.querySelectorAll('.prazo-publico[data-prazo]').forEach(function (el) {
+            const prazo = parseInt(el.getAttribute('data-prazo'), 10);
+            const info = formatarPrazoPublico(prazo);
+            el.textContent = info ? info : '—';
+        });
+    }
+    atualizarPrazos();
+    setInterval(atualizarPrazos, 15000);
+
+    // ===== Chat com a loja =====
+    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+    function formatarHoraChat(ms) {
+        if (!ms) return '';
+        return new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function renderChat(pedidoId, mensagens) {
+        const caixa = document.querySelector('.chat-ms-mensagens[data-pedido="' + pedidoId + '"]');
+        if (!caixa) return;
+        const conhecidas = new Set(Array.from(caixa.querySelectorAll('.chat-ms-balao')).map(function (el) { return el.dataset.id; }));
+        let novo = false;
+        mensagens.forEach(function (m) {
+            if (conhecidas.has(String(m.id))) return;
+            const balao = document.createElement('div');
+            balao.className = 'chat-ms-balao ' + (m.remetente === 'CLIENTE' ? 'chat-ms-cliente' : 'chat-ms-loja');
+            balao.dataset.id = String(m.id);
+            const texto = document.createElement('span');
+            texto.textContent = m.texto;
+            const hora = document.createElement('span');
+            hora.className = 'chat-ms-hora';
+            hora.textContent = formatarHoraChat(m.dataHoraEpochMillis);
+            balao.appendChild(texto);
+            balao.appendChild(hora);
+            caixa.appendChild(balao);
+            novo = true;
+        });
+        const vazio = caixa.querySelector('.chat-ms-vazio');
+        if (caixa.querySelectorAll('.chat-ms-balao').length > 0 && vazio) vazio.remove();
+        if (novo) caixa.scrollTop = caixa.scrollHeight;
+    }
+
+    function carregarChat(pedidoId, marcarLida) {
+        return fetch('/site/pedidos/' + pedidoId + '/chat')
+            .then(function (r) { if (!r.ok) throw new Error('erro'); return r.json(); })
+            .then(function (msgs) {
+                renderChat(pedidoId, msgs);
+                if (marcarLida) {
+                    fetch('/site/pedidos/' + pedidoId + '/chat/lidas', {
+                        method: 'POST', headers: { [csrfHeader]: csrfToken }
+                    });
+                    const badge = document.querySelector('.chat-naolidas[data-pedido="' + pedidoId + '"]');
+                    if (badge) badge.style.display = 'none';
+                }
+            })
+            .catch(function () {});
+    }
+
+    function enviarChat(pedidoId, texto) {
+        return fetch('/site/pedidos/' + pedidoId + '/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', [csrfHeader]: csrfToken },
+            body: 'texto=' + encodeURIComponent(texto)
+        })
+            .then(function (r) { if (!r.ok) throw new Error('erro'); return r.json(); })
+            .then(function (m) { renderChat(pedidoId, [m]); });
+    }
+
+    function aoEnviar(pedidoId) {
+        const input = document.querySelector('.chat-entrada[data-pedido="' + pedidoId + '"]');
+        const texto = input.value.trim();
+        if (!texto) return;
+        input.value = '';
+        enviarChat(pedidoId, texto).catch(function () { input.value = texto; });
+    }
+
+    document.querySelectorAll('.chat-toggle').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const pedidoId = btn.getAttribute('data-pedido');
+            const painel = document.querySelector('.chat-ms[data-pedido="' + pedidoId + '"]');
+            const aberto = painel.style.display !== 'none';
+            if (aberto) { painel.style.display = 'none'; return; }
+            painel.style.display = 'flex';
+            carregarChat(pedidoId, true);
+            const entrada = document.querySelector('.chat-entrada[data-pedido="' + pedidoId + '"]');
+            if (entrada) entrada.focus();
+        });
+    });
+
+    document.querySelectorAll('.chat-enviar').forEach(function (btn) {
+        btn.addEventListener('click', function () { aoEnviar(btn.getAttribute('data-pedido')); });
+    });
+    document.querySelectorAll('.chat-entrada').forEach(function (input) {
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') aoEnviar(input.getAttribute('data-pedido'));
+        });
+    });
+
+    function atualizarBadgesChat(mapa) {
+        document.querySelectorAll('.chat-naolidas').forEach(function (badge) {
+            const n = mapa[badge.getAttribute('data-pedido')] || 0;
+            if (n > 0) { badge.textContent = n > 99 ? '99+' : n; badge.style.display = 'flex'; }
+            else badge.style.display = 'none';
+        });
+    }
+
+    function atualizarChatsAbertos() {
+        document.querySelectorAll('.chat-ms[data-pedido]').forEach(function (painel) {
+            if (painel.style.display !== 'none') carregarChat(painel.getAttribute('data-pedido'), true);
+        });
+        fetch('/site/pedidos/chat/naolidas')
+            .then(function (r) { return r.json(); })
+            .then(atualizarBadgesChat)
+            .catch(function () {});
+    }
+    setInterval(atualizarChatsAbertos, 8000);
+</script>
+<script th:src="@{/js/publico.js}"></script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+  Barra de navegação compartilhada das páginas públicas do site.
+  Uso: <th:block th:replace="~{publico/fragments/navbar-publico :: nav(active='pedidos')}"></th:block>
+  Parâmetro `active` (opcional): 'cardapio' | 'sobre' | 'contato' | 'perfil' | 'pedidos'
+-->
+<th:block th:fragment="nav(active)">
+    <style>
+        .navbar-custom .nav-link.active { color:#F6D32D; font-weight:600; }
+        .navbar-custom .dropdown-menu { background:#fff; border:0; }
+        .navbar-custom .dropdown-item { color:#332a26; }
+        .navbar-custom .dropdown-item:hover { background:#f3ede6; color:#63452C; }
+        .navbar-custom .dropdown-item.active { background:#F6D32D; color:#63452C; }
+        .navbar-custom .dropdown-header { color:#8a603e; }
+        .pendente-bar { background:#F6D32D; color:#63452C; border-bottom:2px solid #e0be23; }
+        .pendente-bar .btn-pagar { background:#63452C; color:#fff; border:0; font-weight:600; }
+        .pendente-bar .btn-pagar:hover { background:#4a3320; color:#fff; }
+    </style>
+
+    <nav class="navbar navbar-expand-lg navbar-custom py-2 sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" th:href="@{/site}">
+                <img class="logo" th:src="@{/img/logo.png}" alt="Marmitas Sousa"> Marmitas Sousa
+            </a>
+            <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#publicNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="publicNav">
+                <div class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+                    <a class="nav-link" th:classappend="${active == 'cardapio'} ? 'active' : ''" th:href="@{/site}">Cardápio</a>
+                    <a class="nav-link" th:classappend="${active == 'sobre'} ? 'active' : ''" th:href="@{/site/sobre}">Sobre nós</a>
+                    <a class="nav-link" th:classappend="${active == 'contato'} ? 'active' : ''" th:href="@{/site/contato}">Contato</a>
+                    <a class="nav-link" th:href="@{/site/carrinho}">Carrinho <span class="badge rounded-pill text-bg-warning" id="navCartCount">0</span></a>
+
+                    <!-- Usuário logado: menu suspenso com o nome do cliente como primeiro item -->
+                    <div class="nav-item dropdown" th:if="${clientePublico != null}">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-user me-1"></i><span th:text="${'Olá, ' + clientePublico.nome}">Olá</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header text-truncate" style="max-width:240px;" th:text="${'Olá, ' + clientePublico.nome}">Olá</h6></li>
+                            <li><a class="dropdown-item" th:classappend="${active == 'perfil'} ? 'active' : ''" th:href="@{/site/perfil}"><i class="fa-solid fa-id-card me-2"></i>Meu perfil</a></li>
+                            <li>
+                                <a class="dropdown-item" th:classappend="${active == 'pedidos'} ? 'active' : ''" th:href="@{/site/pedidos}">
+                                    <i class="fa-solid fa-receipt me-2"></i>Meus pedidos
+                                    <span th:if="${pedidoPendente != null}" class="badge text-bg-warning ms-1">1 pendente</span>
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" th:href="@{/site/sair}"><i class="fa-solid fa-right-from-bracket me-2"></i>Sair</a></li>
+                        </ul>
+                    </div>
+
+                    <a class="nav-link" th:if="${clientePublico == null}" th:href="@{/site/login}"><i class="fa-solid fa-user me-1"></i> Entrar</a>
+                    <a class="nav-link" th:if="${clientePublico == null}" th:href="@{/site/cadastro}"><i class="fa-solid fa-user-plus me-1"></i> Criar conta</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Notificação: existe um pedido aguardando pagamento -->
+    <div th:if="${pedidoPendente != null}" class="pendente-bar">
+        <div class="container d-flex flex-wrap align-items-center justify-content-center gap-2 gap-sm-3 py-2">
+            <i class="fa-solid fa-hourglass-half"></i>
+            <span class="small fw-semibold">Você tem um pedido aguardando pagamento.</span>
+            <a class="btn btn-sm btn-pagar" th:href="@{/site/pedidos/{id}/pagar(id=${pedidoPendente.id})}">
+                <i class="fa-solid fa-barcode me-1"></i>Pagar agora
+            </a>
+        </div>
+    </div>
+
+    <!-- Botão flutuante de ajuda pelo WhatsApp -->
+    <th:block th:replace="~{publico/fragments/ajuda-whatsapp :: botao}"></th:block>
+</th:block>
+</body>
+</html>

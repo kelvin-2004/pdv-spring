@@ -130,10 +130,16 @@
                     <a class="nav-link" th:href="@{/admin/dashboard}"><i class="fa-solid fa-chart-line me-1"></i> Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/pedidos/gerenciar}"><i class="fa-solid fa-filter me-1"></i> Pedidos</a>
+                    <a class="nav-link" th:href="@{/pedidos/entregas}"><i class="fa-solid fa-motorcycle me-1"></i> Entregas</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/pedidos/entregas}"><i class="fa-solid fa-motorcycle me-1"></i> Entregas</a>
+                    <a class="nav-link" th:href="@{/admin/area-entrega}"><i class="fa-solid fa-map-location-dot me-1"></i> Área de Entrega</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/admin/cupons}"><i class="fa-solid fa-ticket me-1"></i> Cupons</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/admin/configuracoes}"><i class="fa-solid fa-gear me-1"></i> Configurações</a>
                 </li>
             </ul>
 
@@ -191,7 +197,7 @@
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <input type="number" class="form-control form-control-sm text-center" value="1" min="1" style="width: 60px;" th:id="'qtd-' + ${produto.id}">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" title="Adicionar Observação" th:onclick="abrirModalObs([[${produto.id}]], [[${produto.nome}]])">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" title="Adicionar Observação" th:onclick="abrirModalObs([[${produto.id}]], [[${produto.nome}]], [[${produto.preco}]])">
                                     <i class="fa-solid fa-comment-dots"></i>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-marmita" title="Adicionar à sacola" th:onclick="adicionarAoCarrinho([[${produto.id}]], [[${produto.nome}]], [[${produto.preco}]])">
@@ -285,6 +291,8 @@
             <div class="modal-body">
                 <p class="text-muted mb-2" id="nomeProdutoModalLabel" style="font-weight: 600;"></p>
                 <input type="hidden" id="produtoIdModal">
+                <input type="hidden" id="produtoNomeModal">
+                <input type="hidden" id="produtoPrecoModal">
                 <textarea class="form-control" id="textoObservacaoItem" rows="3" placeholder="Ex: Sem sal, separar a salada..."></textarea>
             </div>
             <div class="modal-footer border-0">
@@ -325,9 +333,11 @@
         const quantidade = parseInt(inputQtd.value) || 1;
         const precoNum = parseFloat(preco) || 0;
 
-        const itemExistente = carrinho.find(item => item.id === id);
-        if (itemExistente) {
-            itemExistente.quantidade += quantidade;
+        // Agrupa (soma a quantidade) apenas em uma linha sem observação.
+        // Se já existir uma linha com observação, cria uma linha separada para o item normal.
+        const itemAgrupavel = carrinho.find(item => item.id === id && (!item.observacao || item.observacao.trim() === ''));
+        if (itemAgrupavel) {
+            itemAgrupavel.quantidade += quantidade;
         } else {
             carrinho.push({
                 id: id,
@@ -406,21 +416,36 @@
         return true;
     }
 
-    function abrirModalObs(idProduto, nomeProduto) {
+    function abrirModalObs(idProduto, nomeProduto, precoProduto) {
         document.getElementById('produtoIdModal').value = idProduto;
+        document.getElementById('produtoNomeModal').value = nomeProduto;
+        document.getElementById('produtoPrecoModal').value = precoProduto;
         document.getElementById('nomeProdutoModalLabel').textContent = nomeProduto;
         document.getElementById('textoObservacaoItem').value = '';
         new bootstrap.Modal(document.getElementById('modalObservacao')).show();
     }
 
     function salvarObservacaoItem() {
-        const id = document.getElementById('produtoIdModal').value;
-        const obs = document.getElementById('textoObservacaoItem').value;
-        const item = carrinho.find(i => i.id == id);
-        if (item) {
-            item.observacao = obs;
-            atualizarTabelaCarrinho();
+        const id = parseInt(document.getElementById('produtoIdModal').value);
+        const nome = document.getElementById('produtoNomeModal').value;
+        const preco = parseFloat(document.getElementById('produtoPrecoModal').value) || 0;
+        const obs = document.getElementById('textoObservacaoItem').value.trim();
+
+        if (!obs) {
+            bootstrap.Modal.getInstance(document.getElementById('modalObservacao')).hide();
+            return;
         }
+
+        // Se já existe uma linha desse produto sem observação, anexa a observação nela.
+        // Caso contrário (produto ainda não adicionado ou já com observação), cria uma nova linha.
+        const itemSemObs = carrinho.find(i => i.id === id && (!i.observacao || i.observacao.trim() === ''));
+        if (itemSemObs) {
+            itemSemObs.observacao = obs;
+        } else {
+            carrinho.push({ id: id, nome: nome, preco: preco, quantidade: 1, observacao: obs });
+        }
+
+        atualizarTabelaCarrinho();
         bootstrap.Modal.getInstance(document.getElementById('modalObservacao')).hide();
     }
 </script>

@@ -125,7 +125,10 @@
                     <a class="nav-link" th:href="@{/admin/dashboard}"><i class="fa-solid fa-chart-line me-1"></i> Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/pedidos/gerenciar}"><i class="fa-solid fa-filter me-1"></i> Pedidos</a>
+                    <a class="nav-link" th:href="@{/admin/cupons}"><i class="fa-solid fa-ticket me-1"></i> Cupons</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/admin/configuracoes}"><i class="fa-solid fa-gear me-1"></i> Configurações</a>
                 </li>
             </ul>
 
@@ -202,6 +205,7 @@
                 <input type="hidden" name="trocoPara" th:value="${trocoPara}">
                 <input type="hidden" name="carrinhoJson" th:value="${carrinhoJson}">
                 <input type="hidden" name="observacoes" th:value="${observacoes}">
+                <input type="hidden" name="tempoEntregaMinutos" th:value="${tempoEntregaMinutos}">
                 <input type="hidden" name="imprimir" value="false">
 
                 <button type="submit" class="btn btn-secondary px-3 shadow-sm">
@@ -224,6 +228,7 @@
                 <input type="hidden" name="trocoPara" th:value="${trocoPara}">
                 <input type="hidden" name="carrinhoJson" th:value="${carrinhoJson}">
                 <input type="hidden" name="observacoes" th:value="${observacoes}">
+                <input type="hidden" name="tempoEntregaMinutos" th:value="${tempoEntregaMinutos}">
                 <input type="hidden" name="imprimir" value="true">
 
                 <button type="submit" class="btn btn-marmita px-4 shadow-sm">

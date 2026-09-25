@@ -1,13 +1,18 @@
 package PDV.PDV.controller;
 
+import PDV.PDV.model.Enum.formaPagamento;
 import PDV.PDV.model.Enum.statusPedido;
+import PDV.PDV.model.Enum.remetenteMensagem;
 import PDV.PDV.model.clientes;
+import PDV.PDV.model.itensPedido;
 import PDV.PDV.model.pedido;
 import PDV.PDV.repository.clienteRepository;
 import PDV.PDV.service.ImpressaoService;
 import PDV.PDV.service.clienteService;
+import PDV.PDV.service.configuracaoService;
 import PDV.PDV.service.produtoService;
 import PDV.PDV.service.pedidoService;
+import PDV.PDV.service.MensagemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +26,10 @@ import tools.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.springframework.format.annotation.DateTimeFormat;
 
 @Controller
@@ -40,10 +49,16 @@ public class pedidoController {
     private pedidoService pedidoService;
 
     @Autowired
-    private ImpressaoService impressaoService; // Injeção correta do serviço de impressão
+    private ImpressaoService impressaoService;
+
+    @Autowired
+    private configuracaoService configuracaoService;
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private MensagemService mensagemService;
 
     @GetMapping
     public String index(Model model) {
@@ -59,7 +74,73 @@ public class pedidoController {
         model.addAttribute("aCaminho", pedidoService.listarStatusDoDia(statusPedido.A_CAMINHO));
         model.addAttribute("concluidos", pedidoService.listarStatusDoDia(statusPedido.CONCLUIDO));
         model.addAttribute("cancelados", pedidoService.listarStatusDoDia(statusPedido.CANCELADO));
+        model.addAttribute("tempoPreparoPadrao", configuracaoService.obterTempoPreparoPadrao());
         return "pedidos/gerenciar";
+    }
+
+    @GetMapping("/notificacoes")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> notificacoes() {
+        List<Map<String, Object>> lista = new ArrayList<>();
+        adicionarPedidosNotificacao(lista, pedidoService.listarStatusDoDia(statusPedido.PREPARANDO));
+        adicionarPedidosNotificacao(lista, pedidoService.listarStatusDoDia(statusPedido.AGUARDANDO_ENTREGADOR));
+        adicionarPedidosNotificacao(lista, pedidoService.listarStatusDoDia(statusPedido.A_CAMINHO));
+        return ResponseEntity.ok(lista);
+    }
+
+    private void adicionarPedidosNotificacao(List<Map<String, Object>> lista, List<pedido> pedidos) {
+        for (pedido p : pedidos) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", p.getId());
+            m.put("status", p.getStatusPedido() != null ? p.getStatusPedido().name() : null);
+            m.put("prazo", p.getPrazoPreparoEpochMillis());
+            m.put("cliente", p.getCliente() != null ? p.getCliente().getNome() : "Cliente");
+            m.put("total", p.getValorTotal() != null ? p.getValorTotal().doubleValue() : 0.0);
+            lista.add(m);
+        }
+    }
+
+    @GetMapping("/{pedidoId}/chat")
+    @ResponseBody
+    public ResponseEntity<List<PDV.PDV.dto.MensagemDTO>> chatPedido(@PathVariable Long pedidoId) {
+        return ResponseEntity.ok(mensagemService.listar(pedidoId));
+    }
+
+    @PostMapping("/{pedidoId}/chat")
+    @ResponseBody
+    public ResponseEntity<?> enviarMensagemLoja(@PathVariable Long pedidoId,
+                                                @RequestParam(defaultValue = "") String texto) {
+        if (texto == null || texto.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("erro", "Escreva uma mensagem."));
+        }
+        pedido p = pedidoService.procurarID(pedidoId).orElse(null);
+        if (p == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("erro", "Pedido não encontrado."));
+        }
+        return ResponseEntity.ok(mensagemService.enviar(p, remetenteMensagem.LOJA, texto.trim()));
+    }
+
+    @PostMapping("/{pedidoId}/chat/lidas")
+    @ResponseBody
+    public ResponseEntity<?> marcarLidasLoja(@PathVariable Long pedidoId) {
+        mensagemService.marcarLidas(pedidoId, remetenteMensagem.CLIENTE);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/chat/naolidas")
+    @ResponseBody
+    public ResponseEntity<Map<Long, Integer>> chatNaoLidas() {
+        return ResponseEntity.ok(mensagemService.naoLidasPorPedido(remetenteMensagem.CLIENTE));
+    }
+
+    @GetMapping("/gerenciar/quadro")
+    public String quadroGerenciar(Model model) {
+        model.addAttribute("preparando", pedidoService.listarStatusDoDia(statusPedido.PREPARANDO));
+        model.addAttribute("aguardandoEntregador", pedidoService.listarStatusDoDia(statusPedido.AGUARDANDO_ENTREGADOR));
+        model.addAttribute("aCaminho", pedidoService.listarStatusDoDia(statusPedido.A_CAMINHO));
+        model.addAttribute("concluidos", pedidoService.listarStatusDoDia(statusPedido.CONCLUIDO));
+        model.addAttribute("cancelados", pedidoService.listarStatusDoDia(statusPedido.CANCELADO));
+        return "pedidos/gerenciar :: quadro";
     }
 
     @GetMapping("/entregas")
@@ -175,6 +256,7 @@ public class pedidoController {
             @RequestParam("valorItens") Double valorItens,
             @RequestParam(value = "carrinhoJson", required = false) String carrinhoJson,
             @RequestParam(value = "observacoes", required = false) String observacoes,
+            @RequestParam(value = "tempoEntregaMinutos", required = false) Integer tempoEntregaMinutos,
             Model model) {
 
         model.addAttribute("nomeCliente", nomeCliente);
@@ -187,6 +269,7 @@ public class pedidoController {
         model.addAttribute("valorItens", valorItens);
         model.addAttribute("carrinhoJson", carrinhoJson);
         model.addAttribute("observacoes", observacoes);
+        model.addAttribute("tempoEntregaMinutos", tempoEntregaMinutos);
 
         return "pedidos/etapa3";
     }
@@ -211,6 +294,7 @@ public class pedidoController {
             @RequestParam(value = "trocoPara", required = false) String trocoPara,
             @RequestParam(value = "carrinhoJson", required = false) String carrinhoJson,
             @RequestParam(value = "observacoes", required = false) String observacoes,
+            @RequestParam(value = "tempoEntregaMinutos", required = false) Integer tempoEntregaMinutos,
             Model model) {
 
         Double totalGeral = valorItens + taxaEntrega;
@@ -242,7 +326,6 @@ public class pedidoController {
                     sb.append("\n");
                 }
             } catch (Exception ignored) {
-                // O resumo financeiro continua disponível mesmo se o carrinho estiver inválido.
             }
         }
 
@@ -253,6 +336,9 @@ public class pedidoController {
         sb.append("Forma de Pagamento: ").append(formaPagamento).append("\n");
         if ("Dinheiro".equals(formaPagamento) && trocoPara != null && !trocoPara.trim().isEmpty()) {
             sb.append("Troco para: R$ ").append(trocoPara).append("\n");
+        }
+        if (tempoEntregaMinutos != null && tempoEntregaMinutos > 0) {
+            sb.append("Tempo estimado de entrega: ").append(tempoEntregaMinutos).append(" min\n");
         }
 
         sb.append("\n*Endereço de Entrega:*\n");
@@ -280,6 +366,7 @@ public class pedidoController {
         model.addAttribute("trocoPara", trocoPara);
         model.addAttribute("carrinhoJson", carrinhoJson);
         model.addAttribute("observacoes", observacoes);
+        model.addAttribute("tempoEntregaMinutos", tempoEntregaMinutos);
 
         return "pedidos/etapa4-preview";
     }
@@ -298,6 +385,7 @@ public class pedidoController {
             @RequestParam(value = "trocoPara", required = false) String trocoPara,
             @RequestParam("carrinhoJson") String carrinhoJson,
             @RequestParam(value = "observacoes", required = false) String observacoes,
+            @RequestParam(value = "tempoEntregaMinutos", required = false) Integer tempoEntregaMinutos,
             @RequestParam(value = "imprimir", defaultValue = "false") boolean imprimir,
             RedirectAttributes redirectAttributes) {
 
@@ -320,8 +408,14 @@ public class pedidoController {
         novoPedido.setCliente(cliente);
         novoPedido.setTaxaEntrega(BigDecimal.valueOf(taxaEntrega));
         novoPedido.setObservacoes(observacoes);
+        novoPedido.setTempoEntregaMinutos(tempoEntregaMinutos);
 
-        novoPedido.setFormaPagamento(normalizarFormaPagamento(formaPagamento));
+        try {
+            novoPedido.setFormaPagamento(normalizarFormaPagamento(formaPagamento));
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("erro", e.getMessage());
+            return "redirect:/pedidos";
+        }
 
         if (trocoPara != null && !trocoPara.trim().isEmpty()) {
             try {
@@ -329,7 +423,6 @@ public class pedidoController {
             } catch (Exception ignored) {}
         }
 
-        // Salva o pedido e recupera a instância contendo o ID gerado pelo banco
         pedido pedidoSalvo;
         try {
             pedidoSalvo = pedidoService.novoPedidoComItens(novoPedido, carrinhoJson);
@@ -338,7 +431,6 @@ public class pedidoController {
             return "redirect:/pedidos";
         }
 
-        // Se a opção de imprimir foi marcada como true, executa o serviço de impressão
         if (imprimir && pedidoSalvo != null && pedidoSalvo.getId() != null) {
             try {
                 impressaoService.imprimirPedido(pedidoSalvo.getId());
@@ -354,15 +446,12 @@ public class pedidoController {
     }
 
     private PDV.PDV.model.Enum.formaPagamento normalizarFormaPagamento(String valor) {
-        if (valor == null) {
+        if (valor == null || valor.isBlank()) {
             return null;
         }
-        String normalizado = valor.trim().toUpperCase()
-                .replace("Á", "A")
-                .replace("É", "E")
-                .replace("Í", "I")
-                .replace("Ó", "O")
-                .replace("Ú", "U");
+        String normalizado = java.text.Normalizer.normalize(valor.trim(), java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toUpperCase();
         if (normalizado.startsWith("CARTAO")) {
             return PDV.PDV.model.Enum.formaPagamento.CARTAO;
         }
@@ -370,7 +459,7 @@ public class pedidoController {
             case "DINHEIRO" -> PDV.PDV.model.Enum.formaPagamento.DINHEIRO;
             case "PIX" -> PDV.PDV.model.Enum.formaPagamento.PIX;
             case "APP" -> PDV.PDV.model.Enum.formaPagamento.APP;
-            default -> throw new IllegalArgumentException("Forma de pagamento inválida");
+            default -> throw new IllegalArgumentException("Forma de pagamento inválida: " + valor);
         };
     }
 
@@ -388,10 +477,35 @@ public class pedidoController {
         }
     }
 
+    @PatchMapping("/{id}/tempo-preparo")
+    @ResponseBody
+    public ResponseEntity<?> atualizarTempoPreparo(@PathVariable Long id, @RequestParam("minutos") Integer minutos) {
+        try {
+            pedidoService.atualizarTempoPreparo(id, minutos);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao atualizar tempo de preparo: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/configuracao/preparo")
+    @ResponseBody
+    public ResponseEntity<?> atualizarPreparoPadrao(@RequestParam("minutos") Integer minutos) {
+        try {
+            configuracaoService.atualizarTempoPreparoPadrao(minutos);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao salvar configuração: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/{id}/imprimir")
     public String imprimirPedido(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
-            // Chamada correta utilizando a instância do service injetada
             impressaoService.imprimirPedido(id);
             redirectAttributes.addFlashAttribute("sucesso", "Pedido enviado para a impressora com sucesso!");
         } catch (Exception e) {
@@ -399,6 +513,94 @@ public class pedidoController {
         }
 
         return "redirect:/pedidos/gerenciar";
+    }
+
+    @GetMapping("/{id}/editar")
+    public String editarPedido(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        pedido p = pedidoService.carregarParaEdicao(id);
+        if (p == null) {
+            redirectAttributes.addFlashAttribute("erro", "Pedido não encontrado.");
+            return "redirect:/pedidos/gerenciar";
+        }
+        if (p.getStatusPedido() == statusPedido.CONCLUIDO || p.getStatusPedido() == statusPedido.CANCELADO) {
+            redirectAttributes.addFlashAttribute("erro", "Não é possível editar um pedido concluído ou cancelado.");
+            return "redirect:/pedidos/gerenciar";
+        }
+
+        List<Map<String, Object>> itens = new ArrayList<>();
+        if (p.getItens() != null) {
+            for (itensPedido item : p.getItens()) {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("id", item.getProduto() != null ? item.getProduto().getId() : null);
+                m.put("nome", item.getProduto() != null ? item.getProduto().getNome() : "");
+                m.put("preco", item.getPrecoUnitario() != null ? item.getPrecoUnitario().doubleValue() : 0.0);
+                m.put("quantidade", item.getQuantidade() != null ? item.getQuantidade() : 0);
+                m.put("observacao", item.getObservacao() == null ? "" : item.getObservacao());
+                itens.add(m);
+            }
+        }
+
+        List<Map<String, Object>> formas = new ArrayList<>();
+        for (formaPagamento f : formaPagamento.values()) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("value", f.name());
+            m.put("label", rotuloFormaPagamento(f));
+            m.put("selected", p.getFormaPagamento() == f);
+            formas.add(m);
+        }
+
+        model.addAttribute("pedido", p);
+        model.addAttribute("pedidoItens", itens);
+        model.addAttribute("produtos", produtoService.listarAtivos());
+        model.addAttribute("formasPagamento", formas);
+        return "pedidos/editar";
+    }
+
+    @PostMapping("/{id}/editar")
+    public String salvarEdicao(
+            @PathVariable Long id,
+            @RequestParam("formaPagamento") String formaPagamento,
+            @RequestParam(value = "cep", required = false) String cep,
+            @RequestParam(value = "rua", required = false) String rua,
+            @RequestParam(value = "numero", required = false) String numero,
+            @RequestParam(value = "bairro", required = false) String bairro,
+            @RequestParam(value = "complemento", required = false) String complemento,
+            @RequestParam(value = "pontoReferencia", required = false) String pontoReferencia,
+            @RequestParam("carrinhoJson") String carrinhoJson,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            pedido p = pedidoService.procurarID(id)
+                    .orElseThrow(() -> new RuntimeException("Pedido não encontrado"));
+
+            clientes c = p.getCliente();
+            if (c != null) {
+                c.setCep(cep);
+                c.setRua(rua);
+                c.setNumero(numero);
+                c.setBairro(bairro);
+                c.setComplemento(complemento);
+                c.setPontoReferencia(pontoReferencia);
+                clienteRepo.save(c);
+            }
+
+            pedidoService.editarPedido(id, normalizarFormaPagamento(formaPagamento), carrinhoJson);
+            redirectAttributes.addFlashAttribute("sucesso", "Pedido #" + id + " atualizado com sucesso.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("erro", e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("erro", "Erro ao atualizar o pedido: " + e.getMessage());
+        }
+        return "redirect:/pedidos/gerenciar";
+    }
+
+    private String rotuloFormaPagamento(formaPagamento f) {
+        return switch (f) {
+            case DINHEIRO -> "Dinheiro";
+            case CARTAO -> "Cartão";
+            case PIX -> "Pix";
+            case APP -> "App";
+        };
     }
 
     @GetMapping("/entregas/concluir/{id}")
