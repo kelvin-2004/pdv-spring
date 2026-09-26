@@ -6,6 +6,8 @@ import javax.print.attribute.PrintRequestAttributeSet;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -204,8 +206,13 @@ public class ImpressaoService {
                     + ". Selecione a impressora em Administração → Impressora.");
         }
 
-        String textoFormatado = textoParaImprimir + "\n\n\n\n\n";
-        InputStream stream = new ByteArrayInputStream(textoFormatado.getBytes("CP850"));
+        // A comanda é convertida para ASCII puro (sem acentos) antes de enviar:
+        // impressoras térmicas ESC/POS usam code page de 1 byte (CP437/CP850) e o
+        // DocFlavor.AUTOSENSE + driver CUPS não tratam UTF-8/acentos de forma confiável.
+        // Assim, pedidos com dados acentuados (cliente logado no site) imprimem igual
+        // aos pedidos do PDV.
+        String textoFormatado = removerAcentos(textoParaImprimir + "\n\n\n\n\n");
+        InputStream stream = new ByteArrayInputStream(textoFormatado.getBytes(StandardCharsets.US_ASCII));
 
         DocFlavor flavor = DocFlavor.INPUT_STREAM.AUTOSENSE;
         Doc documento = new SimpleDoc(stream, flavor, null);
@@ -215,5 +222,15 @@ public class ImpressaoService {
         job.print(documento, atributos);
 
         stream.close();
+    }
+
+    private String removerAcentos(String texto) {
+        if (texto == null) {
+            return "";
+        }
+        String semAcentos = Normalizer.normalize(texto, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
+        // Mantém apenas caracteres imprimíveis ASCII (e quebras de linha), substituindo o resto por '?'.
+        return semAcentos.replaceAll("[^\\x20-\\x7E\\n\\r\\t]", "?");
     }
 }
