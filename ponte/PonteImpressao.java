@@ -57,7 +57,7 @@ public class PonteImpressao {
                 for (Comanda c : pendentes) {
                     System.out.println("Imprimindo pedido #" + c.id + " ...");
                     String texto = new String(Base64.getDecoder().decode(c.textoBase64), StandardCharsets.UTF_8);
-                    imprimirTexto(texto, impressora);
+                    imprimirOuEnviar(http, texto, impressora);
                     concluir(http, url, auth, c.id);
                     System.out.println("Pedido #" + c.id + " impresso e marcado como concluído.");
                 }
@@ -112,8 +112,9 @@ public class PonteImpressao {
         sb.append("Marmitas Sousa\n");
         sb.append("==================================================\n");
         sb.append("A ponte está imprimindo corretamente.\n");
-        imprimirTexto(sb.toString(), impressora);
-        System.out.println("Teste enviado para \"" + impressora + "\".");
+        HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15)).build();
+        imprimirOuEnviar(http, sb.toString(), impressora);
+        System.out.println("Teste enviado.");
     }
 
     private static void imprimirTexto(String texto, String nomeAlvo) throws Exception {
@@ -145,6 +146,58 @@ public class PonteImpressao {
         PrintRequestAttributeSet atributos = new HashPrintRequestAttributeSet();
         job.print(documento, atributos);
         stream.close();
+    }
+
+    // Imprime direto via javax.print ou encaminha para o servidor Node.js da
+    // impressora (Impressora_GP_iFood), conforme PONTE_NODE_URL estiver definida.
+    private static void imprimirOuEnviar(HttpClient http, String texto, String impressora) throws Exception {
+        String nodeUrl = env("PONTE_NODE_URL", "");
+        if (nodeUrl.isBlank()) {
+            imprimirTexto(texto, impressora);
+            return;
+        }
+        enviarParaNode(http, nodeUrl, texto, impressora);
+    }
+
+    // Envia a comanda para o POST /print do servidor Node.js (porta 4013 por padrão),
+    // que cuida da impressão térmica (ESC/POS) com o @thiagoelg/node-printer.
+    private static void enviarParaNode(HttpClient http, String nodeUrl, String texto, String impressora) throws Exception {
+        String base = nodeUrl.endsWith("/") ? nodeUrl.substring(0, nodeUrl.length() - 1) : nodeUrl;
+        String json = "{\"invoice\":" + jsonString(texto)
+                + ",\"printerConfig\":{\"printer\":" + jsonString(impressora)
+                + ",\"printerManufacturer\":\"Epson\"}}";
+        HttpRequest req = HttpRequest.newBuilder(URI.create(base + "/print"))
+                .header("Content-Type", "application/json")
+                .timeout(Duration.ofSeconds(20))
+                .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
+        if (resp.statusCode() >= 300) {
+            throw new RuntimeException("POST /print (node) retornou HTTP " + resp.statusCode() + ": " + resp.body());
+        }
+    }
+
+    private static String jsonString(String s) {
+        StringBuilder sb = new StringBuilder("\"");
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            switch (c) {
+                case '"' -> sb.append("\\\"");
+                case '\\' -> sb.append("\\\\");
+                case '\n' -> sb.append("\\n");
+                case '\r' -> sb.append("\\r");
+                case '\t' -> sb.append("\\t");
+                default -> {
+                    if (c < 0x20) {
+                        sb.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        sb.append(c);
+                    }
+                }
+            }
+        }
+        sb.append("\"");
+        return sb.toString();
     }
 
     private static List<Comanda> parsePendentes(String json) {
