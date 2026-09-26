@@ -7,6 +7,8 @@ import PDV.PDV.model.Enum.tipoLogistico;
 import PDV.PDV.model.Enum.tipoPedido;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -30,9 +32,13 @@ public class pedido {
     private clientes cliente;
 
     @OneToOne(mappedBy = "pedido", cascade = CascadeType.ALL)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private entregas entregas;
 
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<itensPedido> itens;
 
     @Enumerated(EnumType.STRING)
