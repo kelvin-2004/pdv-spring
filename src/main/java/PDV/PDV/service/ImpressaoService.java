@@ -59,10 +59,10 @@ public class ImpressaoService {
 
     public void imprimirTeste(String nomeImpressora) throws Exception {
         StringBuilder sb = new StringBuilder();
-        sb.append("==================================================\n");
+        sb.append("================================\n");
         sb.append("TESTE DE IMPRESSÃO\n");
         sb.append("Marmitas Sousa\n");
-        sb.append("==================================================\n");
+        sb.append("================================\n");
         sb.append("Se você está lendo isto, a impressora\n");
         sb.append("está configurada corretamente.\n");
         imprimirTexto(sb.toString(), nomeImpressora);
@@ -85,30 +85,46 @@ public class ImpressaoService {
                 .orElseThrow(() -> new RuntimeException("Pedido não encontrado com o ID: " + id));
 
         StringBuilder sb = new StringBuilder();
-        sb.append("==================================================\n");
+        sb.append("================================\n");
         sb.append("COMANDA DE PEDIDO\n");
-        sb.append("==================================================\n");
+        sb.append("================================\n");
 
         if (p.getCliente() != null) {
             sb.append("Cliente: ").append(p.getCliente().getNome() != null ? p.getCliente().getNome() : "").append("\n");
             sb.append("Celular: ").append(p.getCliente().getCelular() != null ? p.getCliente().getCelular() : "").append("\n");
 
-            String rua = p.getCliente().getRua() != null ? p.getCliente().getRua() : "";
-            String numero = p.getCliente().getNumero() != null ? ", " + p.getCliente().getNumero() : "";
-            sb.append("Endereço: ").append(rua).append(numero).append("\n");
-
-            if (p.getCliente().getBairro() != null && !p.getCliente().getBairro().isEmpty()) {
-                sb.append("Bairro: ").append(p.getCliente().getBairro()).append("\n");
+            // Endereço de entrega: prioriza o endereço informado no checkout (entregas),
+            // que fica salvo na entrega do pedido; cai no cadastro do cliente quando não houver.
+            String rua = null, numero = null, bairro = null, complemento = null;
+            if (p.getEntregas() != null) {
+                rua = p.getEntregas().getRua();
+                numero = p.getEntregas().getNumero();
+                bairro = p.getEntregas().getBairro();
+                complemento = p.getEntregas().getComplemento();
             }
-            if (p.getCliente().getComplemento() != null && !p.getCliente().getComplemento().isEmpty()) {
-                sb.append("Complemento: ").append(p.getCliente().getComplemento()).append("\n");
+            if (rua == null || rua.isBlank()) rua = p.getCliente().getRua();
+            if (numero == null || numero.isBlank()) numero = p.getCliente().getNumero();
+            if (bairro == null || bairro.isBlank()) bairro = p.getCliente().getBairro();
+            if (complemento == null || complemento.isBlank()) complemento = p.getCliente().getComplemento();
+
+            sb.append("Endereço: ").append(rua != null ? rua : "");
+            if (numero != null && !numero.isBlank()) {
+                sb.append(", ").append(numero);
+            }
+            sb.append("\n");
+
+            if (bairro != null && !bairro.isBlank()) {
+                sb.append("Bairro: ").append(bairro).append("\n");
+            }
+            if (complemento != null && !complemento.isBlank()) {
+                sb.append("Complemento: ").append(complemento).append("\n");
             }
             if (p.getCliente().getPontoReferencia() != null && !p.getCliente().getPontoReferencia().isEmpty()) {
                 sb.append("Referência: ").append(p.getCliente().getPontoReferencia()).append("\n");
             }
         }
 
-        sb.append("\n==================================================\n");
+        sb.append("\n================================\n");
         sb.append("ITENS:\n");
 
         if (p.getItens() != null && !p.getItens().isEmpty()) {
@@ -130,7 +146,7 @@ public class ImpressaoService {
             sb.append("  Nenhum item listado.\n");
         }
 
-        sb.append("==================================================\n\n");
+        sb.append("================================\n\n");
 
         BigDecimal taxaEntrega = p.getTaxaEntrega() != null ? p.getTaxaEntrega() : BigDecimal.ZERO;
         sb.append("Taxa de Entrega: R$ ").append(String.format("%.2f", taxaEntrega)).append("\n");
@@ -141,7 +157,7 @@ public class ImpressaoService {
         if (p.getTempoPreparoMinutos() != null) {
             sb.append("Tempo de Preparo: ").append(p.getTempoPreparoMinutos()).append(" min\n");
         }
-        sb.append("==================================================\n");
+        sb.append("================================\n");
 
         BigDecimal valorTotal = p.getValorTotal() != null ? p.getValorTotal() : BigDecimal.ZERO;
         sb.append("TOTAL: R$ ").append(String.format("%.2f", valorTotal)).append("\n");
@@ -175,7 +191,7 @@ public class ImpressaoService {
         if (p.getObservacoes() != null && !p.getObservacoes().trim().isEmpty()) {
             sb.append("Observações: ").append(p.getObservacoes()).append("\n");
         }
-        sb.append("==================================================\n");
+        sb.append("================================\n");
         sb.append("Obrigado pela sua compra!\n");
 
         return sb.toString();
