@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -52,10 +53,12 @@ public interface pedidoRepository extends JpaRepository<pedido, Long> {
     Optional<pedido> findByPagamentoMpId(Long pagamentoMpId);
 
     @Modifying
+    @Transactional
     @Query("UPDATE pedido p SET p.impresso = true WHERE p.id = :id AND (p.impresso = false OR p.impresso IS NULL)")
     int marcarComoImpresso(@Param("id") Long id);
 
     @Modifying
+    @Transactional
     @Query("UPDATE pedido p SET p.impresso = false WHERE p.id = :id")
     int reverterImpressao(@Param("id") Long id);
 
