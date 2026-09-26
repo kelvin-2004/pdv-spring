@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import PDV.PDV.model.clientes;
 import PDV.PDV.model.pedido;
 import PDV.PDV.model.Enum.formaPagamento;
 import PDV.PDV.model.Enum.tipoPedido;
@@ -124,17 +125,17 @@ public class ImpressaoService {
         }
 
         // ===== Endereço (só para entrega) =====
-        String rua = null, numero = null, bairro = null, cep = null, complemento = null, referencia = null;
+        String rua = null, numeroEndereco = null, bairro = null, cep = null, complemento = null, referencia = null;
         if (p.getEntregas() != null) {
             rua = p.getEntregas().getRua();
-            numero = p.getEntregas().getNumero();
+            numeroEndereco = p.getEntregas().getNumero();
             bairro = p.getEntregas().getBairro();
             cep = p.getEntregas().getCep();
             complemento = p.getEntregas().getComplemento();
         }
         if (p.getCliente() != null) {
             if (!tem(rua)) rua = p.getCliente().getRua();
-            if (!tem(numero)) numero = p.getCliente().getNumero();
+            if (!tem(numeroEndereco)) numeroEndereco = p.getCliente().getNumero();
             if (!tem(bairro)) bairro = p.getCliente().getBairro();
             if (!tem(cep)) cep = p.getCliente().getCep();
             if (!tem(complemento)) complemento = p.getCliente().getComplemento();
@@ -145,8 +146,8 @@ public class ImpressaoService {
             sb.append(SEPARADOR_FINO).append('\n');
             sb.append("Endereco:\n");
             String endereco = tem(rua) ? rua : "";
-            if (tem(numero)) {
-                endereco = endereco.isBlank() ? numero : endereco + ", " + numero;
+            if (tem(numeroEndereco)) {
+                endereco = endereco.isBlank() ? numeroEndereco : endereco + ", " + numeroEndereco;
             }
             if (!endereco.isBlank()) {
                 sb.append("  ").append(endereco).append('\n');
