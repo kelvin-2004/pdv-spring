@@ -8,11 +8,14 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import PDV.PDV.model.pedido;
 import PDV.PDV.model.Enum.formaPagamento;
+import PDV.PDV.model.Enum.tipoPedido;
 import PDV.PDV.model.itensPedido;
 import PDV.PDV.repository.pedidoRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +30,13 @@ public class ImpressaoService {
 
     @Value("${impressora.modo:local}")
     private String modoImpressao;
+
+    // Largura do papel térmico 58mm em colunas (fonte padrão) — usada para centralizar
+    // e alinhar à direita o cabeçalho e os totais.
+    private static final int LARGURA = 32;
+    private static final String SEPARADOR = "=".repeat(LARGURA);
+    private static final String SEPARADOR_FINO = "-".repeat(LARGURA);
+    private static final DateTimeFormatter FMT_DATA_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private final pedidoRepository pedidoRepo;
     private final configuracaoService configuracaoService;
@@ -85,46 +95,78 @@ public class ImpressaoService {
                 .orElseThrow(() -> new RuntimeException("Pedido não encontrado com o ID: " + id));
 
         StringBuilder sb = new StringBuilder();
-        sb.append("================================\n");
-        sb.append("COMANDA DE PEDIDO\n");
-        sb.append("================================\n");
 
+        // ===== Cabeçalho =====
+        sb.append(SEPARADOR).append('\n');
+        sb.append(centralizar("MARMITAS SOUSA")).append('\n');
+        sb.append(centralizar("Comanda de Pedido")).append('\n');
+        sb.append(SEPARADOR).append('\n');
+
+        Object numero = p.getNumeroPedidoCliente() != null ? p.getNumeroPedidoCliente() : p.getId();
+        sb.append("Pedido: #").append(numero).append('\n');
+        if (p.getDataHoraLocal() != null) {
+            sb.append("Data: ").append(p.getDataHoraLocal().format(FMT_DATA_HORA)).append('\n');
+        }
+        if (p.getTipoPedido() != null) {
+            sb.append("Tipo: ").append(p.getTipoPedido() == tipoPedido.RETIRADA ? "Retirada" : "Entrega").append('\n');
+        }
+
+        // ===== Cliente =====
         if (p.getCliente() != null) {
-            sb.append("Cliente: ").append(p.getCliente().getNome() != null ? p.getCliente().getNome() : "").append("\n");
-            sb.append("Celular: ").append(p.getCliente().getCelular() != null ? p.getCliente().getCelular() : "").append("\n");
-
-            // Endereço de entrega: prioriza o endereço informado no checkout (entregas),
-            // que fica salvo na entrega do pedido; cai no cadastro do cliente quando não houver.
-            String rua = null, numero = null, bairro = null, complemento = null;
-            if (p.getEntregas() != null) {
-                rua = p.getEntregas().getRua();
-                numero = p.getEntregas().getNumero();
-                bairro = p.getEntregas().getBairro();
-                complemento = p.getEntregas().getComplemento();
+            clientes c = p.getCliente();
+            sb.append(SEPARADOR_FINO).append('\n');
+            if (tem(c.getNome())) {
+                sb.append("Cliente: ").append(c.getNome()).append('\n');
             }
-            if (rua == null || rua.isBlank()) rua = p.getCliente().getRua();
-            if (numero == null || numero.isBlank()) numero = p.getCliente().getNumero();
-            if (bairro == null || bairro.isBlank()) bairro = p.getCliente().getBairro();
-            if (complemento == null || complemento.isBlank()) complemento = p.getCliente().getComplemento();
-
-            sb.append("Endereço: ").append(rua != null ? rua : "");
-            if (numero != null && !numero.isBlank()) {
-                sb.append(", ").append(numero);
-            }
-            sb.append("\n");
-
-            if (bairro != null && !bairro.isBlank()) {
-                sb.append("Bairro: ").append(bairro).append("\n");
-            }
-            if (complemento != null && !complemento.isBlank()) {
-                sb.append("Complemento: ").append(complemento).append("\n");
-            }
-            if (p.getCliente().getPontoReferencia() != null && !p.getCliente().getPontoReferencia().isEmpty()) {
-                sb.append("Referência: ").append(p.getCliente().getPontoReferencia()).append("\n");
+            if (tem(c.getCelular())) {
+                sb.append("Celular: ").append(c.getCelular()).append('\n');
             }
         }
 
-        sb.append("\n================================\n");
+        // ===== Endereço (só para entrega) =====
+        String rua = null, numero = null, bairro = null, cep = null, complemento = null, referencia = null;
+        if (p.getEntregas() != null) {
+            rua = p.getEntregas().getRua();
+            numero = p.getEntregas().getNumero();
+            bairro = p.getEntregas().getBairro();
+            cep = p.getEntregas().getCep();
+            complemento = p.getEntregas().getComplemento();
+        }
+        if (p.getCliente() != null) {
+            if (!tem(rua)) rua = p.getCliente().getRua();
+            if (!tem(numero)) numero = p.getCliente().getNumero();
+            if (!tem(bairro)) bairro = p.getCliente().getBairro();
+            if (!tem(cep)) cep = p.getCliente().getCep();
+            if (!tem(complemento)) complemento = p.getCliente().getComplemento();
+            referencia = p.getCliente().getPontoReferencia();
+        }
+
+        if (p.getTipoPedido() != tipoPedido.RETIRADA) {
+            sb.append(SEPARADOR_FINO).append('\n');
+            sb.append("Endereco:\n");
+            String endereco = tem(rua) ? rua : "";
+            if (tem(numero)) {
+                endereco = endereco.isBlank() ? numero : endereco + ", " + numero;
+            }
+            if (!endereco.isBlank()) {
+                sb.append("  ").append(endereco).append('\n');
+            }
+            if (tem(bairro)) {
+                sb.append("  Bairro: ").append(bairro).append('\n');
+            }
+            if (tem(cep)) {
+                sb.append("  CEP: ").append(cep).append('\n');
+            }
+            if (tem(complemento)) {
+                sb.append("  Compl.: ").append(complemento).append('\n');
+            }
+            if (tem(referencia)) {
+                sb.append("  Ref.: ").append(referencia).append('\n');
+            }
+        }
+
+        // ===== Itens =====
+        sb.append(SEPARADOR_FINO).append('\n');
         sb.append("ITENS:\n");
 
         if (p.getItens() != null && !p.getItens().isEmpty()) {
@@ -132,50 +174,56 @@ public class ImpressaoService {
                 String nomeProduto = (item.getProduto() != null && item.getProduto().getNome() != null)
                         ? item.getProduto().getNome()
                         : "Item";
-
+                int quantidade = item.getQuantidade() != null ? item.getQuantidade() : 1;
+                BigDecimal valorUnitario = item.getPrecoUnitario() != null ? item.getPrecoUnitario() : BigDecimal.ZERO;
                 BigDecimal valorSubtotal = item.getSubtotal() != null ? item.getSubtotal() : BigDecimal.ZERO;
 
-                sb.append("  ").append(item.getQuantidade()).append("x ").append(nomeProduto)
-                        .append(" - R$ ").append(String.format("%.2f", valorSubtotal)).append("\n");
+                sb.append("  ").append(quantidade).append("x ").append(nomeProduto).append('\n');
+                if (quantidade > 1 && valorUnitario.compareTo(BigDecimal.ZERO) > 0) {
+                    sb.append("     ").append(quantidade).append(" x ").append(moeda(valorUnitario))
+                            .append(" = ").append(moeda(valorSubtotal)).append('\n');
+                } else {
+                    sb.append("     ").append(moeda(valorSubtotal)).append('\n');
+                }
 
                 if (item.getObservacao() != null && !item.getObservacao().trim().isEmpty()) {
-                    sb.append("     Obs: ").append(item.getObservacao()).append("\n");
+                    sb.append("     Obs: ").append(item.getObservacao()).append('\n');
                 }
             }
         } else {
             sb.append("  Nenhum item listado.\n");
         }
 
-        sb.append("================================\n\n");
+        // ===== Totais =====
+        sb.append(SEPARADOR_FINO).append('\n');
 
         BigDecimal taxaEntrega = p.getTaxaEntrega() != null ? p.getTaxaEntrega() : BigDecimal.ZERO;
-        sb.append("Taxa de Entrega: R$ ").append(String.format("%.2f", taxaEntrega)).append("\n");
-
-        if (p.getTempoEntregaMinutos() != null) {
-            sb.append("Tempo de Entrega: ").append(p.getTempoEntregaMinutos()).append(" min\n");
-        }
-        if (p.getTempoPreparoMinutos() != null) {
-            sb.append("Tempo de Preparo: ").append(p.getTempoPreparoMinutos()).append(" min\n");
-        }
-        sb.append("================================\n");
-
+        BigDecimal desconto = p.getDesconto() != null ? p.getDesconto() : BigDecimal.ZERO;
         BigDecimal valorTotal = p.getValorTotal() != null ? p.getValorTotal() : BigDecimal.ZERO;
-        sb.append("TOTAL: R$ ").append(String.format("%.2f", valorTotal)).append("\n");
 
-        String formaPagamentoStr = "Não informada";
-        if (p.getFormaPagamento() != null) {
-            formaPagamentoStr = p.getFormaPagamento().name();
+        if (taxaEntrega.compareTo(BigDecimal.ZERO) > 0) {
+            sb.append(direita("Taxa de Entrega:", moeda(taxaEntrega))).append('\n');
         }
-        sb.append("Pagamento: ").append(formaPagamentoStr).append("\n");
+        if (desconto.compareTo(BigDecimal.ZERO) > 0) {
+            sb.append(direita("Desconto:", "-" + moeda(desconto))).append('\n');
+        }
+        sb.append(SEPARADOR).append('\n');
+        sb.append(direita("TOTAL:", moeda(valorTotal))).append('\n');
+
+        // ===== Pagamento =====
+        sb.append(SEPARADOR_FINO).append('\n');
+        sb.append("Pagamento: ").append(descricaoFormaPagamento(p.getFormaPagamento())).append('\n');
 
         if (Boolean.TRUE.equals(p.getPagamentoNaEntrega())) {
-            sb.append("\n*** COBRAR NA ENTREGA ***\n");
+            sb.append('\n').append(centralizar("*** COBRAR NA ENTREGA ***")).append('\n');
             if (p.getFormaPagamento() == formaPagamento.CARTAO) {
-                sb.append(">>> COBRAR VIA MAQUININHA DE CARTÃO <<<\n");
+                sb.append(centralizar(">>> MAQUININHA DE CARTAO <<<")).append('\n');
             } else if (p.getFormaPagamento() == formaPagamento.DINHEIRO) {
-                sb.append(">>> RECEBER EM DINHEIRO <<<\n");
+                sb.append(centralizar(">>> RECEBER EM DINHEIRO <<<")).append('\n');
             }
-            sb.append("\n");
+            sb.append('\n');
+        } else if (Boolean.TRUE.equals(p.getPago())) {
+            sb.append("Status: PAGO\n");
         }
 
         if (p.getFormaPagamento() == formaPagamento.DINHEIRO && p.getTrocoPara() != null) {
@@ -184,17 +232,58 @@ public class ImpressaoService {
             if (troco.compareTo(BigDecimal.ZERO) < 0) {
                 troco = BigDecimal.ZERO;
             }
-            sb.append("Valor Recebido: R$ ").append(String.format("%.2f", valorRecebido)).append("\n");
-            sb.append("Troco: R$ ").append(String.format("%.2f", troco)).append("\n");
+            sb.append("Recebido: ").append(moeda(valorRecebido)).append('\n');
+            sb.append("Troco: ").append(moeda(troco)).append('\n');
         }
 
         if (p.getObservacoes() != null && !p.getObservacoes().trim().isEmpty()) {
-            sb.append("Observações: ").append(p.getObservacoes()).append("\n");
+            sb.append("Obs. geral: ").append(p.getObservacoes()).append('\n');
         }
-        sb.append("================================\n");
-        sb.append("Obrigado pela sua compra!\n");
+
+        sb.append(SEPARADOR).append('\n');
+        sb.append(centralizar("Obrigado pela sua compra!")).append('\n');
 
         return sb.toString();
+    }
+
+    private static String centralizar(String texto) {
+        if (texto == null || texto.length() >= LARGURA) {
+            return texto == null ? "" : texto;
+        }
+        int espacos = LARGURA - texto.length();
+        int esquerda = espacos / 2;
+        return " ".repeat(esquerda) + texto;
+    }
+
+    private static String direita(String rotulo, String valor) {
+        int espacos = LARGURA - rotulo.length() - valor.length();
+        if (espacos < 1) {
+            espacos = 1;
+        }
+        return rotulo + " ".repeat(espacos) + valor;
+    }
+
+    private static String moeda(BigDecimal valor) {
+        if (valor == null) {
+            valor = BigDecimal.ZERO;
+        }
+        return String.format(Locale.US, "%.2f", valor).replace('.', ',');
+    }
+
+    private static boolean tem(String s) {
+        return s != null && !s.isBlank();
+    }
+
+    private static String descricaoFormaPagamento(formaPagamento f) {
+        if (f == null) {
+            return "Nao informada";
+        }
+        return switch (f) {
+            case DINHEIRO -> "Dinheiro";
+            case CARTAO -> "Cartao";
+            case PIX -> "PIX";
+            case APP -> "App";
+        };
     }
 
     private void imprimirTexto(String textoParaImprimir, String nomeAlvo) throws Exception {
