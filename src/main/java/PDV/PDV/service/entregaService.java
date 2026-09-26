@@ -7,6 +7,8 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -25,6 +27,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class entregaService {
+
+    private static final Logger log = LoggerFactory.getLogger(entregaService.class);
 
     private static final String BRASILAPI_URL = "https://brasilapi.com.br/api/cep/v2/";
     private static final String GEOAPIFY_URL = "https://api.geoapify.com/v1/geocode/search";
@@ -105,8 +109,15 @@ public class entregaService {
         String cidade = dados.path("city").asText("");
         String estado = dados.path("state").asText("");
 
-        double[] coords = geocodificarEndereco(cepTexto, logradouro, bairro, cidade, estado);
-        double distancia = calcularDistanciaKm(LAT_ORIGEM, LON_ORIGEM, coords[0], coords[1]);
+        double distancia = 0.0;
+        try {
+            double[] coords = geocodificarEndereco(cepTexto, logradouro, bairro, cidade, estado);
+            distancia = calcularDistanciaKm(LAT_ORIGEM, LON_ORIGEM, coords[0], coords[1]);
+        } catch (Exception e) {
+            // A distância é opcional (depende do Geoapify). Sem ela, o endereço e a
+            // taxa de entrega continuam válidos — são determinados por bairro/cidade.
+            log.warn("Falha ao geocodificar endereço do CEP {} (distância será 0): {}", cepTexto, e.getMessage());
+        }
 
         ResultadoEntrega r = new ResultadoEntrega();
         r.setSucesso(true);
