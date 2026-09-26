@@ -78,7 +78,7 @@
                 <div id="painelPix">
                     <div class="text-center" id="pixGerar">
                         <p class="text-muted mb-3">Gere o código Pix e faça o pagamento pelo app do seu banco.</p>
-                        <button class="btn btn-m px-4" type="button" onclick="gerarPix()"><i class="fa-solid fa-qrcode me-2"></i>Gerar código Pix</button>
+                        <button class="btn btn-m px-4" id="btnGerarPix" type="button" onclick="gerarPix()"><i class="fa-solid fa-qrcode me-2"></i>Gerar código Pix</button>
                     </div>
                     <div class="text-center d-none" id="pixResultado">
                         <div class="qr-box mx-auto mb-3"><img id="pixQr" alt="QR Code Pix"></div>
@@ -146,7 +146,7 @@
                             <label class="form-label small fw-semibold">E-mail para o comprovante</label>
                             <input class="form-control" id="email" type="email" placeholder="voce@email.com">
                         </div>
-                        <button class="btn btn-m w-100" type="submit"><i class="fa-solid fa-lock me-2"></i>Pagar com cartão</button>
+                        <button class="btn btn-m w-100" id="btnPagarCartao" type="submit"><i class="fa-solid fa-lock me-2"></i>Pagar com cartão</button>
                     </form>
                 </div>
 
@@ -187,7 +187,7 @@
                             <label class="form-check-label" for="cartaoCredito">Crédito</label>
                         </div>
                     </div>
-                    <button class="btn btn-m w-100" type="button" onclick="confirmarEntrega()"><i class="fa-solid fa-check me-2"></i>Confirmar pedido</button>
+                    <button class="btn btn-m w-100" id="btnConfirmarEntrega" type="button" onclick="confirmarEntrega()"><i class="fa-solid fa-check me-2"></i>Confirmar pedido</button>
                 </div>
 
                 <div id="msgErro" class="alert alert-danger mt-3 d-none"></div>
@@ -291,6 +291,8 @@
 
     function confirmarEntrega() {
         esconderErro();
+        const btn = document.getElementById('btnConfirmarEntrega');
+        if (btn.disabled) return;
         if (!carrinho.length) { mostrarErro('Carrinho vazio.'); return; }
         const forma = document.querySelector('input[name="formaEntrega"]:checked').value;
         const tipoCartao = document.querySelector('input[name="tipoCartaoEntrega"]:checked').value;
@@ -307,6 +309,7 @@
             }
         }
 
+        btn.disabled = true;
         post('/site/pedido/entrega', {
             carrinhoJson: JSON.stringify(carrinho),
             observacoes,
@@ -325,10 +328,14 @@
                     localStorage.removeItem('cupomPublico');
                     window.location.href = '/site/pedidos?criado=1';
                 } else {
+                    btn.disabled = false;
                     mostrarErro(d.mensagem || 'Não foi possível registrar o pedido.');
                 }
             })
-            .catch(() => mostrarErro('Erro de conexão ao registrar o pedido.'));
+            .catch(() => {
+                btn.disabled = false;
+                mostrarErro('Erro de conexão ao registrar o pedido.');
+            });
     }
 
     function esconderErro() { document.getElementById('msgErro').classList.add('d-none'); }
@@ -341,6 +348,9 @@
     }
 
     function gerarPix() {
+        const btn = document.getElementById('btnGerarPix');
+        if (btn.disabled) return;
+        btn.disabled = true;
         post('/site/pagamento/pix', { carrinhoJson: JSON.stringify(carrinho), observacoes, cupom: cupomCodigo, ...paramsEntrega() })
             .then(d => {
                 if (d.sucesso) {
@@ -357,10 +367,14 @@
                     iniciarPollingPix();
                     if (d.expiracaoPagamento) iniciarCountdownPix(d.expiracaoPagamento);
                 } else {
+                    btn.disabled = false;
                     mostrarErro(d.mensagem || 'Não foi possível gerar o Pix.');
                 }
             })
-            .catch(() => mostrarErro('Erro de conexão ao gerar o Pix.'));
+            .catch(() => {
+                btn.disabled = false;
+                mostrarErro('Erro de conexão ao gerar o Pix.');
+            });
     }
 
     function copiarPix() {
@@ -418,7 +432,10 @@
     function pagarCartao(event) {
         event.preventDefault();
         esconderErro();
+        const btn = document.getElementById('btnPagarCartao');
+        if (btn.disabled) return false;
         if (!mp) { mostrarErro('Pagamento online não configurado (chave pública ausente).'); return false; }
+        btn.disabled = true;
         const cardData = {
             cardNumber: document.getElementById('cardNumber').value.replace(/\D/g, ''),
             cardholderName: document.getElementById('cardholderName').value.trim(),
@@ -453,10 +470,10 @@
             })
             .then(d => {
                 if (d.sucesso && d.status === 'approved') { sucesso(); }
-                else if (d.sucesso) { mostrarErro('Pagamento recusado: ' + traduzirStatus(d.statusDetail)); }
-                else { mostrarErro(d.mensagem || 'Erro ao processar o cartão.'); }
+                else if (d.sucesso) { btn.disabled = false; mostrarErro('Pagamento recusado: ' + traduzirStatus(d.statusDetail)); }
+                else { btn.disabled = false; mostrarErro(d.mensagem || 'Erro ao processar o cartão.'); }
             })
-            .catch(err => mostrarErro('Erro ao processar o cartão: ' + (err.message || err)));
+            .catch(err => { btn.disabled = false; mostrarErro('Erro ao processar o cartão: ' + (err.message || err)); });
         return false;
     }
 
