@@ -34,6 +34,10 @@ public class cupomService {
         if (tipo == null) {
             throw new IllegalArgumentException("Informe o tipo do cupom.");
         }
+        // Desconto fixo e desconto na entrega precisam de um valor; frete grátis não usa valor.
+        if (tipo != tipoCupom.FRETE_GRATIS && (valor == null || valor.compareTo(BigDecimal.ZERO) <= 0)) {
+            throw new IllegalArgumentException("Informe o valor do desconto (maior que zero).");
+        }
         String codigoNormalizado = codigo.trim().toUpperCase();
         if (cupomRepo.findByCodigoIgnoreCase(codigoNormalizado).isPresent()) {
             throw new IllegalArgumentException("Já existe um cupom com esse código.");

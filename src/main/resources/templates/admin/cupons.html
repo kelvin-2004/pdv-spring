@@ -271,7 +271,7 @@
                             <tr th:each="c : ${cupons}">
                                 <td class="fw-semibold" th:text="${c.codigo}">BEMVINDO10</td>
                                 <td th:text="${c.tipo.descricao}">Desconto fixo</td>
-                                <td class="text-end" th:text="${c.tipo.name() == 'FRETE_GRATIS' ? '—' : 'R$ ' + #numbers.formatDecimal(c.valor, 1, 2).replace('.', ',')}">R$ 10,00</td>
+                                <td class="text-end" th:text="${c.tipo.name() == 'FRETE_GRATIS' || c.valor == null ? '—' : 'R$ ' + #numbers.formatDecimal(c.valor, 1, 2).replace('.', ',')}">R$ 10,00</td>
                                 <td class="text-end" th:text="${'R$ ' + #numbers.formatDecimal(c.valorMinimo, 1, 2).replace('.', ',')}">R$ 0,00</td>
                                 <td th:text="${c.publico.descricao}">Todos</td>
                                 <td class="text-end">
