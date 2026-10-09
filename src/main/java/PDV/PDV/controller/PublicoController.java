@@ -481,15 +481,14 @@ public class PublicoController {
                                           @RequestParam(defaultValue = "") String cep,
                                           HttpSession session) {
         clientes cliente = clienteLogado(session);
-        if (cliente == null) {
-            return naoAutenticado();
-        }
         try {
             BigDecimal subtotal = pedidoService.calcularTotal(carrinhoJson);
             BigDecimal taxa = BigDecimal.ZERO;
             if (!"RETIRADA".equalsIgnoreCase(tipoPedido) && cep != null && !cep.isBlank()) {
                 taxa = taxaEntregaParaValidacao(cep);
             }
+            // Visitantes não logados podem validar um cupom para ver o desconto no carrinho;
+            // o desconto é recalculado no fechamento do pedido com o cliente autenticado.
             BigDecimal desconto = cupomService.calcularDesconto(codigo, cliente, subtotal, taxa);
             cupom c = cupomService.buscarPorCodigo(codigo);
             Map<String, Object> resp = new LinkedHashMap<>();

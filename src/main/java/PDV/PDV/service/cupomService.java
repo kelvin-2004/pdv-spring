@@ -79,10 +79,12 @@ public class cupomService {
                     + minimo.setScale(2, RoundingMode.HALF_UP).toPlainString().replace('.', ','));
         }
 
-        if (c.getPublico() == publicoCupom.PRIMEIRO_PEDIDO && pedidoRepo.countByCliente(cliente) != 0) {
+        // Um visitante ainda não logado (cliente == null) não tem histórico de pedidos:
+        // conta como "primeiro pedido" e, portanto, não pode usar cupom de cliente existente.
+        if (c.getPublico() == publicoCupom.PRIMEIRO_PEDIDO && cliente != null && pedidoRepo.countByCliente(cliente) != 0) {
             throw new IllegalArgumentException("Este cupom é válido apenas para o primeiro pedido.");
         }
-        if (c.getPublico() == publicoCupom.CLIENTE_EXISTENTE && pedidoRepo.countByCliente(cliente) < 1) {
+        if (c.getPublico() == publicoCupom.CLIENTE_EXISTENTE && (cliente == null || pedidoRepo.countByCliente(cliente) < 1)) {
             throw new IllegalArgumentException("Este cupom é válido apenas para clientes que já pediram.");
         }
 

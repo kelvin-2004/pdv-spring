@@ -87,18 +87,19 @@
                 <div class="d-flex justify-content-between mb-2" id="linhaDesconto" style="display:none;"><span class="text-muted">Desconto</span><span id="cartDesconto" class="text-success">- R$ 0,00</span></div>
                 <div class="d-flex justify-content-between fw-bold fs-5 border-top pt-3 mb-3"><span>Total</span><span id="cartTotal">R$ 0,00</span></div>
 
+                <label class="form-label small fw-semibold" for="cupomInput">Cupom de desconto</label>
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control" id="cupomInput" placeholder="Ex.: BEMVINDO10" autocomplete="off">
+                    <button class="btn btn-outline-secondary" type="button" onclick="aplicarCupom()">Aplicar</button>
+                </div>
+                <div id="cupomResultado" class="small mb-2"></div>
+
                 <div th:if="${clientePublico != null}">
-                    <label class="form-label small fw-semibold" for="cupomInput">Cupom de desconto</label>
-                    <div class="input-group mb-2">
-                        <input type="text" class="form-control" id="cupomInput" placeholder="Ex.: BEMVINDO10" autocomplete="off">
-                        <button class="btn btn-outline-secondary" type="button" onclick="aplicarCupom()">Aplicar</button>
-                    </div>
-                    <div id="cupomResultado" class="small mb-2"></div>
                     <label class="form-label small fw-semibold" for="observacoes">Observações</label>
                     <textarea class="form-control mb-3" id="observacoes" rows="2" placeholder="Ex.: sem cebola"></textarea>
-                    <button class="btn btn-m w-100" type="button" onclick="irParaPagamento()" th:disabled="${!lojaAberta}">Finalizar pedido</button>
+                    <button class="btn btn-m w-100" type="button" onclick="irParaPagamento()" th:disabled="${!lojaAberta}">Ir para pagamentos</button>
                 </div>
-                <a th:if="${clientePublico == null}" th:href="@{/site/login}" class="btn btn-m w-100">Entre para finalizar</a>
+                <a th:if="${clientePublico == null}" th:href="@{/site/login}" class="btn btn-m w-100">Fazer login</a>
             </div></div>
         </aside>
     </div>
