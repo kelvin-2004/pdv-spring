@@ -10,6 +10,7 @@ import PDV.PDV.repository.clienteRepository;
 import PDV.PDV.service.ImpressaoService;
 import PDV.PDV.service.clienteService;
 import PDV.PDV.service.configuracaoService;
+import PDV.PDV.service.entregaService;
 import PDV.PDV.service.produtoService;
 import PDV.PDV.service.pedidoService;
 import PDV.PDV.service.MensagemService;
@@ -55,6 +56,9 @@ public class pedidoController {
     private configuracaoService configuracaoService;
 
     @Autowired
+    private entregaService entregaService;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
@@ -94,7 +98,7 @@ public class pedidoController {
             m.put("id", p.getId());
             m.put("status", p.getStatusPedido() != null ? p.getStatusPedido().name() : null);
             m.put("prazo", p.getPrazoPreparoEpochMillis());
-            m.put("cliente", p.getCliente() != null ? p.getCliente().getNome() : "Cliente");
+            m.put("cliente", p.getNomeClienteExibicao());
             m.put("total", p.getValorTotal() != null ? p.getValorTotal().doubleValue() : 0.0);
             lista.add(m);
         }
@@ -515,6 +519,26 @@ public class pedidoController {
         return "redirect:/pedidos/gerenciar";
     }
 
+    // Texto completo da comanda (a mesma nota que vai para a impressora) para o botão
+    // "Copiar" do gestor copiar a nota inteira, e não só um resumo.
+    @GetMapping(value = "/{id}/nota", produces = "text/plain;charset=UTF-8")
+    @ResponseBody
+    public String notaPedido(@PathVariable Long id) {
+        return impressaoService.montarTextoPedido(id);
+    }
+
+    // Consulta o endereço de um CEP (rua/bairro/cidade) para preencher automaticamente
+    // o formulário de edição do pedido ("recalcular endereço pelo CEP").
+    @GetMapping("/cep/{cep}")
+    @ResponseBody
+    public ResponseEntity<?> buscarCep(@PathVariable String cep) {
+        try {
+            return ResponseEntity.ok(entregaService.buscarEnderecoPorCep(cep));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("erro", e.getMessage()));
+        }
+    }
+
     @GetMapping("/{id}/editar")
     public String editarPedido(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         pedido p = pedidoService.carregarParaEdicao(id);
@@ -570,20 +594,9 @@ public class pedidoController {
             RedirectAttributes redirectAttributes) {
 
         try {
-            pedido p = pedidoService.procurarID(id)
-                    .orElseThrow(() -> new RuntimeException("Pedido não encontrado"));
-
-            clientes c = p.getCliente();
-            if (c != null) {
-                c.setCep(cep);
-                c.setRua(rua);
-                c.setNumero(numero);
-                c.setBairro(bairro);
-                c.setComplemento(complemento);
-                c.setPontoReferencia(pontoReferencia);
-                clienteRepo.save(c);
-            }
-
+            // Atualiza o endereço de entrega de forma integrada (entregas + cliente) e
+            // o carrinho/forma de pagamento. Antes só o cliente era alterado.
+            pedidoService.atualizarEnderecoEntrega(id, rua, numero, bairro, cep, complemento, pontoReferencia);
             pedidoService.editarPedido(id, normalizarFormaPagamento(formaPagamento), carrinhoJson);
             redirectAttributes.addFlashAttribute("sucesso", "Pedido #" + id + " atualizado com sucesso.");
         } catch (IllegalArgumentException e) {

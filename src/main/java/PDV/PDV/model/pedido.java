@@ -105,6 +105,34 @@ public class pedido {
     @Column(name = "pagamento_na_entrega")
     private Boolean pagamentoNaEntrega = false;
 
+    // Integração iFood: id do pedido na plataforma (dedupe no polling) e o número
+    // curto exibido ao cliente (displayId, ex.: "#1234").
+    @Column(name = "ifood_pedido_id", length = 64)
+    private String ifoodPedidoId;
+
+    @Column(name = "ifood_referencia", length = 32)
+    private String ifoodReferencia;
+
+    // Pedidos de origem externa (iFood) não têm um clientes cadastrado: guardamos
+    // nome/telefone direto do payload para exibição e contato no gestor.
+    @Column(name = "cliente_nome_externo", length = 120)
+    private String clienteNomeExterno;
+
+    @Column(name = "cliente_telefone_externo", length = 30)
+    private String clienteTelefoneExterno;
+
+    // Integração 99Food: id do pedido na plataforma (dedupe no polling) e o número
+    // curto exibido ao operador. dataPrazoEntrega guarda o prazo/ETA de entrega da 99
+    // (usado para destacar no painel os pedidos com entrega da própria 99).
+    @Column(name = "n99_pedido_id", length = 64)
+    private String n99PedidoId;
+
+    @Column(name = "n99_referencia", length = 32)
+    private String n99Referencia;
+
+    @Column(name = "data_prazo_entrega")
+    private OffsetDateTime dataPrazoEntrega;
+
     public BigDecimal getTrocoPara() {
         return trocoPara;
     }
@@ -124,6 +152,17 @@ public class pedido {
     }
 
     @Transient
+    public String getNomeClienteExibicao() {
+        if (cliente != null && cliente.getNome() != null && !cliente.getNome().isBlank()) {
+            return cliente.getNome();
+        }
+        if (clienteNomeExterno != null && !clienteNomeExterno.isBlank()) {
+            return clienteNomeExterno;
+        }
+        return "Cliente";
+    }
+
+    @Transient
     public long getExpiracaoPagamentoEpochMillis() {
         if (dataExpiracaoPagamento == null) {
             return 0L;
@@ -139,6 +178,14 @@ public class pedido {
         }
         int preparo = tempoPreparoMinutos != null ? tempoPreparoMinutos : 30;
         return inicio.plusMinutes(preparo).toInstant().toEpochMilli();
+    }
+
+    @Transient
+    public long getPrazoEntregaEpochMillis() {
+        if (dataPrazoEntrega == null) {
+            return 0L;
+        }
+        return dataPrazoEntrega.toInstant().toEpochMilli();
     }
 
     @Transient

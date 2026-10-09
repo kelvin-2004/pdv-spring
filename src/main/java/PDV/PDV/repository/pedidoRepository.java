@@ -52,6 +52,10 @@ public interface pedidoRepository extends JpaRepository<pedido, Long> {
 
     Optional<pedido> findByPagamentoMpId(Long pagamentoMpId);
 
+    Optional<pedido> findByIfoodPedidoId(String ifoodPedidoId);
+
+    Optional<pedido> findByN99PedidoId(String n99PedidoId);
+
     @Modifying
     @Transactional
     @Query("UPDATE pedido p SET p.impresso = true WHERE p.id = :id AND (p.impresso = false OR p.impresso IS NULL)")

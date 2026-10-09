@@ -2,6 +2,7 @@ package PDV.PDV.controller;
 
 import PDV.PDV.model.produtos;
 import PDV.PDV.repository.produtoRepository;
+import PDV.PDV.service.IfoodService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,6 +23,9 @@ public class produtoController {
 
     @Autowired
     private produtoRepository produtoRepository;
+
+    @Autowired
+    private IfoodService ifoodService;
 
     private static final String UPLOAD_DIR = "uploads/";
 
@@ -88,7 +92,9 @@ public class produtoController {
             }
 
             produtoRepository.save(produto);
-            redirectAttributes.addFlashAttribute("sucesso", "Produto salvo com sucesso!");
+            boolean sincronizado = ifoodService.sincronizarDisponibilidade(produto);
+            redirectAttributes.addFlashAttribute("sucesso",
+                    "Produto salvo com sucesso!" + (sincronizado ? " Disponibilidade sincronizada com o iFood." : ""));
 
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("erro",

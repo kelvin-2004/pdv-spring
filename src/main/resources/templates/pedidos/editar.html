@@ -206,7 +206,16 @@
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label small text-secondary fw-semibold">CEP</label>
-                                <input class="form-control" name="cep" th:value="${pedido.cliente != null ? pedido.cliente.cep : ''}">
+                                <div class="input-group">
+                                    <input class="form-control" name="cep" id="cep" inputmode="numeric" maxlength="9"
+                                           th:value="${pedido.cliente != null ? pedido.cliente.cep : ''}"
+                                           onblur="buscarCep()">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="buscarCep()"
+                                            title="Buscar endereço pelo CEP">
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted" style="font-size: 0.72rem;">Preenche rua e bairro automaticamente.</small>
                             </div>
                             <div class="col-md-8">
                                 <label class="form-label small text-secondary fw-semibold">Rua</label>
@@ -354,6 +363,34 @@
         }
         document.getElementById('inputCarrinhoJson').value = JSON.stringify(carrinho);
         return true;
+    }
+
+    // Recalcula o endereço a partir do CEP (ViaCEP/BrasilAPI via backend), preenchendo
+    // rua e bairro. Dispara ao sair do campo ou ao clicar no botão de busca.
+    async function buscarCep() {
+        const cepInput = document.getElementById('cep');
+        const cep = (cepInput.value || '').replace(/\D/g, '');
+        if (cep.length !== 8) {
+            return; // CEP incompleto: não atrapalha a digitação
+        }
+        try {
+            const resp = await fetch(`/pedidos/cep/${cep}`);
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({}));
+                alert(err.erro || 'CEP não encontrado.');
+                return;
+            }
+            const data = await resp.json();
+            const preencher = (name, valor) => {
+                if (!valor) return;
+                const el = document.querySelector(`input[name="${name}"]`);
+                if (el && !el.value.trim()) el.value = valor;
+            };
+            preencher('rua', data.logradouro);
+            preencher('bairro', data.bairro);
+        } catch (e) {
+            alert('Erro ao buscar o CEP.');
+        }
     }
 
     renderizarItens();

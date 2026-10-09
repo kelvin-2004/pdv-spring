@@ -39,6 +39,13 @@ public class ImpressaoService {
     private static final String SEPARADOR_FINO = "-".repeat(LARGURA);
     private static final DateTimeFormatter FMT_DATA_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
+    // Comandos ESC/POS para dar destaque gráfico à comanda (negrito + altura dupla),
+    // como os recibos gráficos dos marketplaces. Usados apenas no caminho da ponte
+    // (impressora térmica via Node ESC/POS); no modo local o texto continua puro.
+    private static final String ESC_GRANDE = "\u001B!\u0018";  // negrito + altura dupla
+    private static final String ESC_NEGRITO = "\u001B!\u0008"; // negrito (linhas grossas)
+    private static final String ESC_NORMAL = "\u001B!\u0000";  // volta ao normal
+
     private final pedidoRepository pedidoRepo;
     private final configuracaoService configuracaoService;
 
@@ -92,19 +99,24 @@ public class ImpressaoService {
 
     @Transactional(readOnly = true)
     public String montarTextoPedido(Long id) {
+        return montarTextoPedido(id, false);
+    }
+
+    @Transactional(readOnly = true)
+    public String montarTextoPedido(Long id, boolean escpos) {
         pedido p = pedidoRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pedido não encontrado com o ID: " + id));
 
         StringBuilder sb = new StringBuilder();
 
         // ===== Cabeçalho =====
-        sb.append(SEPARADOR).append('\n');
-        sb.append(centralizar("MARMITAS SOUSA")).append('\n');
-        sb.append(centralizar("Comanda de Pedido")).append('\n');
-        sb.append(SEPARADOR).append('\n');
+        sb.append(negrito(SEPARADOR, escpos)).append('\n');
+        sb.append(destaque(centralizar("MARMITAS SOUSA"), escpos)).append('\n');
+        sb.append(negrito(centralizar("Comanda de Pedido"), escpos)).append('\n');
+        sb.append(negrito(SEPARADOR, escpos)).append('\n');
 
         Object numero = p.getNumeroPedidoCliente() != null ? p.getNumeroPedidoCliente() : p.getId();
-        sb.append("Pedido: #").append(numero).append('\n');
+        sb.append(destaque("Pedido: #" + numero, escpos)).append('\n');
         if (p.getDataHoraLocal() != null) {
             sb.append("Data: ").append(p.getDataHoraLocal().format(FMT_DATA_HORA)).append('\n');
         }
@@ -115,7 +127,7 @@ public class ImpressaoService {
         // ===== Cliente =====
         if (p.getCliente() != null) {
             clientes c = p.getCliente();
-            sb.append(SEPARADOR_FINO).append('\n');
+            sb.append(negrito(SEPARADOR_FINO, escpos)).append('\n');
             if (tem(c.getNome())) {
                 sb.append("Cliente: ").append(c.getNome()).append('\n');
             }
@@ -143,8 +155,8 @@ public class ImpressaoService {
         }
 
         if (p.getTipoPedido() != tipoPedido.RETIRADA) {
-            sb.append(SEPARADOR_FINO).append('\n');
-            sb.append("Endereco:\n");
+            sb.append(negrito(SEPARADOR_FINO, escpos)).append('\n');
+            sb.append(negrito("Endereco:", escpos)).append('\n');
             String endereco = tem(rua) ? rua : "";
             if (tem(numeroEndereco)) {
                 endereco = endereco.isBlank() ? numeroEndereco : endereco + ", " + numeroEndereco;
@@ -167,8 +179,8 @@ public class ImpressaoService {
         }
 
         // ===== Itens =====
-        sb.append(SEPARADOR_FINO).append('\n');
-        sb.append("ITENS:\n");
+        sb.append(negrito(SEPARADOR_FINO, escpos)).append('\n');
+        sb.append(negrito("ITENS:", escpos)).append('\n');
 
         if (p.getItens() != null && !p.getItens().isEmpty()) {
             for (itensPedido item : p.getItens()) {
@@ -196,7 +208,7 @@ public class ImpressaoService {
         }
 
         // ===== Totais =====
-        sb.append(SEPARADOR_FINO).append('\n');
+        sb.append(negrito(SEPARADOR_FINO, escpos)).append('\n');
 
         BigDecimal taxaEntrega = p.getTaxaEntrega() != null ? p.getTaxaEntrega() : BigDecimal.ZERO;
         BigDecimal desconto = p.getDesconto() != null ? p.getDesconto() : BigDecimal.ZERO;
@@ -208,15 +220,15 @@ public class ImpressaoService {
         if (desconto.compareTo(BigDecimal.ZERO) > 0) {
             sb.append(direita("Desconto:", "-" + moeda(desconto))).append('\n');
         }
-        sb.append(SEPARADOR).append('\n');
-        sb.append(direita("TOTAL:", moeda(valorTotal))).append('\n');
+        sb.append(negrito(SEPARADOR, escpos)).append('\n');
+        sb.append(destaque(direita("TOTAL:", moeda(valorTotal)), escpos)).append('\n');
 
         // ===== Pagamento =====
-        sb.append(SEPARADOR_FINO).append('\n');
-        sb.append("Pagamento: ").append(descricaoFormaPagamento(p.getFormaPagamento())).append('\n');
+        sb.append(negrito(SEPARADOR_FINO, escpos)).append('\n');
+        sb.append(negrito("Pagamento: ", escpos)).append(descricaoFormaPagamento(p.getFormaPagamento())).append('\n');
 
         if (Boolean.TRUE.equals(p.getPagamentoNaEntrega())) {
-            sb.append('\n').append(centralizar("*** COBRAR NA ENTREGA ***")).append('\n');
+            sb.append('\n').append(destaque(centralizar("*** COBRAR NA ENTREGA ***"), escpos)).append('\n');
             if (p.getFormaPagamento() == formaPagamento.CARTAO) {
                 sb.append(centralizar(">>> MAQUININHA DE CARTAO <<<")).append('\n');
             } else if (p.getFormaPagamento() == formaPagamento.DINHEIRO) {
@@ -241,7 +253,7 @@ public class ImpressaoService {
             sb.append("Obs. geral: ").append(p.getObservacoes()).append('\n');
         }
 
-        sb.append(SEPARADOR).append('\n');
+        sb.append(negrito(SEPARADOR, escpos)).append('\n');
         sb.append(centralizar("Obrigado pela sua compra!")).append('\n');
 
         return sb.toString();
@@ -262,6 +274,17 @@ public class ImpressaoService {
             espacos = 1;
         }
         return rotulo + " ".repeat(espacos) + valor;
+    }
+
+    // Envolve o texto em destaque ESC/POS (negrito + altura dupla) apenas quando a
+    // comanda for impressa pela ponte (escpos=true). No modo local retorna o texto puro.
+    private static String destaque(String texto, boolean escpos) {
+        return escpos ? ESC_GRANDE + texto + ESC_NORMAL : texto;
+    }
+
+    // Negrito puro (sem mudar a altura) — usado para as linhas separadoras grossas.
+    private static String negrito(String texto, boolean escpos) {
+        return escpos ? ESC_NEGRITO + texto + ESC_NORMAL : texto;
     }
 
     private static String moeda(BigDecimal valor) {

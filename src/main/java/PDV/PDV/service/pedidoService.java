@@ -3,9 +3,11 @@ package PDV.PDV.service;
 import PDV.PDV.model.Enum.formaPagamento;
 import PDV.PDV.model.Enum.statusPedido;
 import PDV.PDV.model.clientes;
+import PDV.PDV.model.entregas;
 import PDV.PDV.model.itensPedido;
 import PDV.PDV.model.pedido;
 import PDV.PDV.model.produtos;
+import PDV.PDV.repository.clienteRepository;
 import PDV.PDV.repository.itensPedidoRepository;
 import PDV.PDV.repository.pedidoRepository;
 import PDV.PDV.repository.produtoRepository;
@@ -30,6 +32,9 @@ public class pedidoService {
     private pedidoRepository pedidoRepo;
 
     @Autowired
+    private clienteRepository clienteRepo;
+
+    @Autowired
     private produtoRepository produtoRepo;
 
     @Autowired
@@ -43,6 +48,12 @@ public class pedidoService {
 
     @Autowired
     private configuracaoService configuracaoService;
+
+    @Autowired
+    private IfoodService ifoodService;
+
+    @Autowired
+    private N99Service n99Service;
 
     public pedido novoPedido(pedido novoPedido) {
         novoPedido.setDataHoraPedido(OffsetDateTime.now());
@@ -281,6 +292,43 @@ public class pedidoService {
         }
     }
 
+    // Atualiza o endereço de entrega em todos os lugares que o guardam: na entidade
+    // entregas (usada na impressão da comanda) e no cadastro do cliente (exibição no
+    // gestor). Antes, a edição só atualizava o cliente e a comanda continuava com o
+    // endereço antigo.
+    @Transactional
+    public pedido atualizarEnderecoEntrega(Long id, String rua, String numero, String bairro,
+            String cep, String complemento, String pontoReferencia) {
+        pedido p = pedidoRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pedido não encontrado com o ID: " + id));
+        validarPedidoEditavel(p);
+
+        entregas e = p.getEntregas();
+        if (e == null) {
+            e = new entregas();
+            e.setPedido(p);
+            p.setEntregas(e);
+        }
+        e.setRua(rua);
+        e.setNumero(numero);
+        e.setBairro(bairro);
+        e.setCep(cep);
+        e.setComplemento(complemento);
+
+        clientes c = p.getCliente();
+        if (c != null) {
+            c.setRua(rua);
+            c.setNumero(numero);
+            c.setBairro(bairro);
+            c.setCep(cep);
+            c.setComplemento(complemento);
+            c.setPontoReferencia(pontoReferencia);
+            clienteRepo.save(c);
+        }
+
+        return pedidoRepo.save(p);
+    }
+
     public pedido atualizarStatus(Long id, statusPedido novoStatus) {
         Optional<pedido> pedidoOptional = pedidoRepo.findById(id);
 
@@ -295,7 +343,15 @@ public class pedidoService {
             p.setDataInicioPreparo(OffsetDateTime.now());
         }
 
-        return pedidoRepo.save(p);
+        pedido salvo = pedidoRepo.save(p);
+
+        // Se o pedido veio da iFood, reflete a mudança de status de volta na plataforma.
+        ifoodService.refletirStatusNoIfood(salvo, novoStatus);
+
+        // Idem para pedidos vindos da 99Food.
+        n99Service.refletirStatusNa99(salvo, novoStatus);
+
+        return salvo;
     }
 
     public List<pedido> listarStatus(statusPedido status) {

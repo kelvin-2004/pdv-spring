@@ -320,6 +320,30 @@
             color: #c0392b;
         }
 
+        /* ===== Destaque de entrega 99 ===== */
+        .badge-99 {
+            background-color: #e8590c;
+            color: #fff;
+        }
+
+        .entrega99-destaque {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            margin-top: 0.25rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #b33909;
+            background-color: #fff4e6;
+            border: 1px solid #ffd8a8;
+            border-radius: 999px;
+            padding: 0.2rem 0.55rem;
+        }
+
+        .entrega99-destaque i {
+            color: #e8590c;
+        }
+
         /* ===== Painel Lateral de Detalhes ===== */
         .detalhes-sidebar {
             background-color: var(--cor-card);
@@ -407,6 +431,7 @@
             <a th:href="@{/admin/dashboard}"><i class="fa-solid fa-chart-line"></i> <span class="link-text">Dashboard</span></a>
             <a th:href="@{/admin/area-entrega}"><i class="fa-solid fa-map-location-dot"></i> <span class="link-text">Área de Entrega</span></a>
             <a th:href="@{/admin/cupons}"><i class="fa-solid fa-ticket"></i> <span class="link-text">Cupons</span></a>
+            <a th:href="@{/admin/ifood}"><i class="fa-solid fa-bolt"></i> <span class="link-text">iFood</span></a>
             <a th:href="@{/admin/configuracoes}"><i class="fa-solid fa-gear"></i> <span class="link-text">Configurações</span></a>
         </nav>
 
@@ -512,13 +537,16 @@
                                         <span th:text="${p.formaPagamento == T(PDV.PDV.model.Enum.formaPagamento).CARTAO} ? 'COBRAR VIA MAQUININHA' : 'COBRAR EM DINHEIRO'"></span>
                                         <span th:if="${p.trocoPara != null}" th:text="${' · troco p/ R$ ' + #numbers.formatDecimal(p.trocoPara, 1, 2, 'COMMA')}"></span>
                                     </div>
-                                    <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.cliente != null ? p.cliente.nome : 'Não informado'}]], [[${p.cliente != null ? p.cliente.celular : ''}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]], [[${p.tempoPreparoMinutos}]], [[${p.prazoPreparoEpochMillis}]])">
+                                    <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.nomeClienteExibicao}]], [[${p.cliente != null ? p.cliente.celular : p.clienteTelefoneExterno}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]], [[${p.tempoPreparoMinutos}]], [[${p.prazoPreparoEpochMillis}]])">
                                         <div class="d-flex justify-content-between fw-bold mb-1 small">
                                             <span>#<span th:text="${p.id}"></span></span>
                                             <span class="text-success">R$ <span th:text="${p.valorTotal}"></span></span>
                                         </div>
                                         <div class="small text-truncate text-secondary fw-medium">
-                                            <span th:text="${p.cliente != null ? p.cliente.nome : 'Cliente'}"></span>
+                                            <span class="badge text-bg-warning me-1" th:if="${p.origemPedido == T(PDV.PDV.model.Enum.origemPedido).IFOOD}">iFood</span><span class="badge badge-99 me-1" th:if="${p.origemPedido == T(PDV.PDV.model.Enum.origemPedido).NOVENTA_E_NOVE}">99</span><span th:text="${p.nomeClienteExibicao}"></span>
+                                        </div>
+                                        <div class="entrega99-destaque" th:if="${p.tipoLogistica == T(PDV.PDV.model.Enum.tipoLogistico).ENTREGA_99}">
+                                            <i class="fa-solid fa-motorcycle"></i>99 entrega · <span class="prazo-entrega" th:attr="data-prazo-entrega=${p.prazoEntregaEpochMillis}">—</span>
                                         </div>
                                         <div class="mt-2">
                                             <span class="prazo-countdown" th:attr="data-prazo=${p.prazoPreparoEpochMillis}">—</span>
@@ -559,13 +587,16 @@
                                         <span th:text="${p.formaPagamento == T(PDV.PDV.model.Enum.formaPagamento).CARTAO} ? 'COBRAR VIA MAQUININHA' : 'COBRAR EM DINHEIRO'"></span>
                                         <span th:if="${p.trocoPara != null}" th:text="${' · troco p/ R$ ' + #numbers.formatDecimal(p.trocoPara, 1, 2, 'COMMA')}"></span>
                                     </div>
-                                    <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.cliente != null ? p.cliente.nome : 'Não informado'}]], [[${p.cliente != null ? p.cliente.celular : ''}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]], [[${p.tempoPreparoMinutos}]], [[${p.prazoPreparoEpochMillis}]])">
+                                    <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.nomeClienteExibicao}]], [[${p.cliente != null ? p.cliente.celular : p.clienteTelefoneExterno}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]], [[${p.tempoPreparoMinutos}]], [[${p.prazoPreparoEpochMillis}]])">
                                         <div class="d-flex justify-content-between fw-bold mb-1 small">
                                             <span>#<span th:text="${p.id}"></span></span>
                                             <span class="text-success">R$ <span th:text="${p.valorTotal}"></span></span>
                                         </div>
                                         <div class="small text-truncate text-secondary fw-medium">
-                                            <span th:text="${p.cliente != null ? p.cliente.nome : 'Cliente'}"></span>
+                                            <span class="badge text-bg-warning me-1" th:if="${p.origemPedido == T(PDV.PDV.model.Enum.origemPedido).IFOOD}">iFood</span><span class="badge badge-99 me-1" th:if="${p.origemPedido == T(PDV.PDV.model.Enum.origemPedido).NOVENTA_E_NOVE}">99</span><span th:text="${p.nomeClienteExibicao}"></span>
+                                        </div>
+                                        <div class="entrega99-destaque" th:if="${p.tipoLogistica == T(PDV.PDV.model.Enum.tipoLogistico).ENTREGA_99}">
+                                            <i class="fa-solid fa-motorcycle"></i>99 entrega · <span class="prazo-entrega" th:attr="data-prazo-entrega=${p.prazoEntregaEpochMillis}">—</span>
                                         </div>
                                     </div>
                                     <div class="card-acoes-status justify-content-between">
@@ -606,13 +637,16 @@
                                         <span th:text="${p.formaPagamento == T(PDV.PDV.model.Enum.formaPagamento).CARTAO} ? 'COBRAR VIA MAQUININHA' : 'COBRAR EM DINHEIRO'"></span>
                                         <span th:if="${p.trocoPara != null}" th:text="${' · troco p/ R$ ' + #numbers.formatDecimal(p.trocoPara, 1, 2, 'COMMA')}"></span>
                                     </div>
-                                    <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.cliente != null ? p.cliente.nome : 'Não informado'}]], [[${p.cliente != null ? p.cliente.celular : ''}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]], [[${p.tempoPreparoMinutos}]], [[${p.prazoPreparoEpochMillis}]])">
+                                    <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.nomeClienteExibicao}]], [[${p.cliente != null ? p.cliente.celular : p.clienteTelefoneExterno}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]], [[${p.tempoPreparoMinutos}]], [[${p.prazoPreparoEpochMillis}]])">
                                         <div class="d-flex justify-content-between fw-bold mb-1 small">
                                             <span>#<span th:text="${p.id}"></span></span>
                                             <span class="text-success">R$ <span th:text="${p.valorTotal}"></span></span>
                                         </div>
                                         <div class="small text-truncate text-secondary fw-medium">
-                                            <span th:text="${p.cliente != null ? p.cliente.nome : 'Cliente'}"></span>
+                                            <span class="badge text-bg-warning me-1" th:if="${p.origemPedido == T(PDV.PDV.model.Enum.origemPedido).IFOOD}">iFood</span><span class="badge badge-99 me-1" th:if="${p.origemPedido == T(PDV.PDV.model.Enum.origemPedido).NOVENTA_E_NOVE}">99</span><span th:text="${p.nomeClienteExibicao}"></span>
+                                        </div>
+                                        <div class="entrega99-destaque" th:if="${p.tipoLogistica == T(PDV.PDV.model.Enum.tipoLogistico).ENTREGA_99}">
+                                            <i class="fa-solid fa-motorcycle"></i>99 entrega · <span class="prazo-entrega" th:attr="data-prazo-entrega=${p.prazoEntregaEpochMillis}">—</span>
                                         </div>
                                     </div>
                                     <div class="card-acoes-status justify-content-between">
@@ -647,13 +681,16 @@
                                 <div th:if="${concluidos == null || concluidos.empty}" class="empty-msg">Nenhum</div>
                                 <div class="pedido-card" th:each="p : ${concluidos}" data-status="CONCLUIDO"
                                      th:attr="data-id=${p.id},data-troco=${p.trocoPara != null ? p.trocoPara : ''},data-naentrega=${p.pagamentoNaEntrega}">
-                                    <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.cliente != null ? p.cliente.nome : 'Não informado'}]], [[${p.cliente != null ? p.cliente.celular : ''}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]], [[${p.tempoPreparoMinutos}]], [[${p.prazoPreparoEpochMillis}]])">
+                                    <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.nomeClienteExibicao}]], [[${p.cliente != null ? p.cliente.celular : p.clienteTelefoneExterno}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]], [[${p.tempoPreparoMinutos}]], [[${p.prazoPreparoEpochMillis}]])">
                                         <div class="d-flex justify-content-between fw-bold mb-1 small">
                                             <span>#<span th:text="${p.id}"></span></span>
                                             <span class="text-success">R$ <span th:text="${p.valorTotal}"></span></span>
                                         </div>
                                         <div class="small text-truncate text-secondary fw-medium">
-                                            <span th:text="${p.cliente != null ? p.cliente.nome : 'Cliente'}"></span>
+                                            <span class="badge text-bg-warning me-1" th:if="${p.origemPedido == T(PDV.PDV.model.Enum.origemPedido).IFOOD}">iFood</span><span class="badge badge-99 me-1" th:if="${p.origemPedido == T(PDV.PDV.model.Enum.origemPedido).NOVENTA_E_NOVE}">99</span><span th:text="${p.nomeClienteExibicao}"></span>
+                                        </div>
+                                        <div class="entrega99-destaque" th:if="${p.tipoLogistica == T(PDV.PDV.model.Enum.tipoLogistico).ENTREGA_99}">
+                                            <i class="fa-solid fa-motorcycle"></i>99 entrega · <span class="prazo-entrega" th:attr="data-prazo-entrega=${p.prazoEntregaEpochMillis}">—</span>
                                         </div>
                                     </div>
                                     <div class="card-acoes-status">
@@ -682,13 +719,16 @@
                                 <div th:if="${cancelados == null || cancelados.empty}" class="empty-msg">Nenhum</div>
                                 <div class="pedido-card" th:each="p : ${cancelados}" data-status="CANCELADO"
                                      th:attr="data-id=${p.id},data-troco=${p.trocoPara != null ? p.trocoPara : ''},data-naentrega=${p.pagamentoNaEntrega}">
-                                    <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.cliente != null ? p.cliente.nome : 'Não informado'}]], [[${p.cliente != null ? p.cliente.celular : ''}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]], [[${p.tempoPreparoMinutos}]], [[${p.prazoPreparoEpochMillis}]])">
+                                    <div class="card-conteudo-clicavel" th:onclick="selecionarPedido(this, [[${p.id}]], [[${p.nomeClienteExibicao}]], [[${p.cliente != null ? p.cliente.celular : p.clienteTelefoneExterno}]], [[${p.valorTotal}]], [[${p.cliente != null ? p.cliente.rua : ''}]], [[${p.cliente != null ? p.cliente.numero : ''}]], [[${p.cliente != null ? p.cliente.bairro : ''}]], [[${p.cliente != null ? p.cliente.cep : ''}]], [[${p.cliente != null ? p.cliente.complemento : ''}]], [[${p.cliente != null ? p.cliente.pontoReferencia : ''}]], [[${p.formaPagamento}]], [[${p.numeroPedidoCliente}]], [[${p.tempoPreparoMinutos}]], [[${p.prazoPreparoEpochMillis}]])">
                                         <div class="d-flex justify-content-between fw-bold mb-1 small">
                                             <span>#<span th:text="${p.id}"></span></span>
                                             <span class="text-success">R$ <span th:text="${p.valorTotal}"></span></span>
                                         </div>
                                         <div class="small text-truncate text-secondary fw-medium">
-                                            <span th:text="${p.cliente != null ? p.cliente.nome : 'Cliente'}"></span>
+                                            <span class="badge text-bg-warning me-1" th:if="${p.origemPedido == T(PDV.PDV.model.Enum.origemPedido).IFOOD}">iFood</span><span class="badge badge-99 me-1" th:if="${p.origemPedido == T(PDV.PDV.model.Enum.origemPedido).NOVENTA_E_NOVE}">99</span><span th:text="${p.nomeClienteExibicao}"></span>
+                                        </div>
+                                        <div class="entrega99-destaque" th:if="${p.tipoLogistica == T(PDV.PDV.model.Enum.tipoLogistico).ENTREGA_99}">
+                                            <i class="fa-solid fa-motorcycle"></i>99 entrega · <span class="prazo-entrega" th:attr="data-prazo-entrega=${p.prazoEntregaEpochMillis}">—</span>
                                         </div>
                                     </div>
                                     <div class="card-acoes-status">
@@ -986,6 +1026,14 @@
             el.classList.toggle('prazo-atrasado', info.atrasado);
         });
 
+        // Destaque de entrega 99 (prazo de entrega da própria 99)
+        document.querySelectorAll('.prazo-entrega[data-prazo-entrega]').forEach(el => {
+            const prazo = parseInt(el.getAttribute('data-prazo-entrega'), 10);
+            if (!prazo || prazo <= 0) { el.textContent = '—'; return; }
+            const minutos = Math.round((prazo - Date.now()) / 60000);
+            el.textContent = minutos > 0 ? `entrega em ${minutos} min` : `entrega atrasada ${Math.abs(minutos)} min`;
+        });
+
         // Badge do painel lateral (pedido selecionado)
         const mPrazo = document.getElementById('mPrazo');
         const blocoPrazo = document.getElementById('blocoPrazo');
@@ -1129,10 +1177,20 @@
     }
 
     function copiarPedidoDetalhes() {
-        let texto = `Pedido #${pedidoSelecionadoAtual.id}\nCliente: ${pedidoSelecionadoAtual.nome}\nTotal: R$ ${pedidoSelecionadoAtual.total}`;
-        navigator.clipboard.writeText(texto).then(() => {
-            alert('Detalhes do pedido copiados!');
-        });
+        if (!pedidoSelecionadoAtual.id) {
+            alert('Nenhum pedido selecionado.');
+            return;
+        }
+        // Copia a nota COMPLETA do pedido (a mesma que vai para a impressora),
+        // buscada no backend — e não apenas um resumo de cliente/total.
+        fetch(`/pedidos/${pedidoSelecionadoAtual.id}/nota`)
+            .then(resp => {
+                if (!resp.ok) { throw new Error('Erro ao carregar a nota.'); }
+                return resp.text();
+            })
+            .then(texto => navigator.clipboard.writeText(texto))
+            .then(() => alert('Nota do pedido copiada!'))
+            .catch(err => alert('Não foi possível copiar a nota: ' + err.message));
     }
 
     /* INTEGRAÇÃO COM O BACKEND PARA DISPARAR A IMPRESSÃO TÉRMICA */

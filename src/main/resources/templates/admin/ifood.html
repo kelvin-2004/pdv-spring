@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marmitas Sousa | Gestão de Entregas</title>
+    <title>Marmitas Sousa | iFood</title>
 
-    <!-- Favicon personalizado nas cores do site -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%2363452C' d='M256 32c125.7 0 228 102.3 228 228s-102.3 228-228 228S28 385.7 28 260 130.3 32 256 32zm0 64c-92.8 0-164 71.2-164 164s71.2 164 164 164 164-71.2 164-164-71.2-164-164-164z'/%3E%3Cpath fill='%23F6D32D' d='M176 220h160v64H176z'/%3E%3C/svg%3E">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -17,28 +16,22 @@
             --cor-secundaria: #F6D32D;
             --cor-fundo: #F6F5F4;
         }
-
         body {
             background-color: var(--cor-fundo);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #333;
         }
-
         .navbar-custom {
             background-color: var(--cor-primaria);
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-
         .navbar-custom .navbar-brand, .navbar-custom .nav-link {
             color: #ffffff;
             font-weight: 500;
         }
-
         .navbar-custom .nav-link:hover, .navbar-custom .nav-link.active {
             color: var(--cor-secundaria) !important;
         }
-
-        /* LOGO ARREDONDADA */
         .logo-header {
             height: 45px;
             width: 45px;
@@ -46,14 +39,12 @@
             border-radius: 50%;
             border: 2px solid var(--cor-secundaria);
         }
-
         .card-custom {
             border: none;
             border-radius: 16px;
             background-color: #ffffff;
             box-shadow: 0 8px 24px rgba(99, 69, 44, 0.06);
         }
-
         .card-header-custom {
             background-color: var(--cor-primaria);
             color: #ffffff;
@@ -61,7 +52,6 @@
             border-top-right-radius: 16px !important;
             padding: 1rem 1.5rem;
         }
-
         .btn-marmita {
             background-color: var(--cor-secundaria);
             color: var(--cor-primaria);
@@ -71,12 +61,10 @@
             border-radius: 8px;
             transition: all 0.3s ease;
         }
-
         .btn-marmita:hover {
             background-color: #e0be23;
             color: var(--cor-primaria);
         }
-
         .btn-gerenciar-custom {
             background-color: transparent;
             color: var(--cor-secundaria);
@@ -86,7 +74,6 @@
             border-radius: 8px;
             transition: all 0.3s ease;
         }
-
         .btn-gerenciar-custom:hover {
             background-color: var(--cor-secundaria);
             color: var(--cor-primaria);
@@ -95,7 +82,6 @@
 </head>
 <body>
 
-<!-- CABEÇALHO COM PAINEL ADMINISTRATIVO E BOTÕES DE ATALHO -->
 <nav class="navbar navbar-expand-lg navbar-dark navbar-custom mb-4 py-2">
     <div class="container-fluid px-4">
         <a class="navbar-brand d-flex align-items-center gap-2" th:href="@{/produtos}">
@@ -108,7 +94,6 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbarNav">
-            <!-- PAINEL ADMIN COM BOTÕES DIRETOS -->
             <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-1">
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/produtos}"><i class="fa-solid fa-utensils me-1"></i> Cardápio</a>
@@ -120,7 +105,7 @@
                     <a class="nav-link" th:href="@{/admin/dashboard}"><i class="fa-solid fa-chart-line me-1"></i> Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" th:href="@{/pedidos/entregas}"><i class="fa-solid fa-motorcycle me-1"></i> Entregas</a>
+                    <a class="nav-link" th:href="@{/pedidos/entregas}"><i class="fa-solid fa-motorcycle me-1"></i> Entregas</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/admin/area-entrega}"><i class="fa-solid fa-map-location-dot me-1"></i> Área de Entrega</a>
@@ -129,14 +114,13 @@
                     <a class="nav-link" th:href="@{/admin/cupons}"><i class="fa-solid fa-ticket me-1"></i> Cupons</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/admin/ifood}"><i class="fa-solid fa-bolt me-1"></i> iFood</a>
+                    <a class="nav-link active" th:href="@{/admin/ifood}"><i class="fa-solid fa-bolt me-1"></i> iFood</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/admin/configuracoes}"><i class="fa-solid fa-gear me-1"></i> Configurações</a>
                 </li>
             </ul>
 
-            <!-- BOTÕES DE ACESSO RÁPIDO -->
             <div class="d-flex align-items-center gap-2">
                 <a class="btn btn-gerenciar-custom d-flex align-items-center gap-2 shadow-sm" th:href="@{/pedidos/gerenciar}">
                     <i class="fa-solid fa-list-check"></i> Gerenciar Pedidos
@@ -152,103 +136,114 @@
 <div class="container pb-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h3 class="fw-bold mb-0" style="color: var(--cor-primaria);">Controle de Entregas</h3>
-            <p class="text-muted mb-0">Consulte as taxas de entrega para calcular o pagamento do motoboy</p>
+            <h3 class="fw-bold mb-0" style="color: var(--cor-primaria);">iFood</h3>
+            <p class="text-muted mb-0">Acompanhe os pedidos da iFood no gestor e vincule os itens do cardápio iFood aos seus produtos.</p>
         </div>
     </div>
 
-    <form class="card card-custom mb-4" method="get" th:action="@{/pedidos/entregas}">
+    <div th:if="${sucesso}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${sucesso}">Sucesso</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${erro}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${erro}">Erro</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Status da integração -->
+    <div class="card card-custom mb-4">
+        <div class="card-header-custom d-flex align-items-center gap-2">
+            <i class="fa-solid fa-tower-broadcast"></i>
+            <h5 class="card-title mb-0 fs-6 fw-bold">Status da integração</h5>
+        </div>
         <div class="card-body p-4">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label for="dataInicial" class="form-label fw-semibold">Data inicial</label>
-                    <input type="date" id="dataInicial" name="dataInicial" class="form-control" th:value="${dataInicial}">
+            <div th:if="${configurado}" class="alert alert-success mb-0" role="alert">
+                <i class="fa-solid fa-circle-check me-1"></i>
+                Credenciais configuradas
+                <span th:if="${merchantId != null and !merchantId.isBlank()}" th:text="${'— loja ' + merchantId}">— loja</span>.
+                Os pedidos chegam a cada ~30 segundos (polling) e aparecem no
+                <a th:href="@{/pedidos/gerenciar}" class="alert-link">Gerenciar Pedidos</a> com o selo <strong>iFood</strong>.
+            </div>
+            <div th:unless="${configurado}" class="alert alert-warning mb-0" role="alert">
+                <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                Integração ainda não configurada. Preencha <code>IFOOD_CLIENT_ID</code>,
+                <code>IFOOD_CLIENT_SECRET</code> e <code>IFOOD_MERCHANT_ID</code> no arquivo <code>.env</code>.
+            </div>
+        </div>
+    </div>
+
+    <!-- Vincular item -->
+    <div class="card card-custom mb-4">
+        <div class="card-header-custom d-flex align-items-center gap-2">
+            <i class="fa-solid fa-link"></i>
+            <h5 class="card-title mb-0 fs-6 fw-bold">Vincular item da iFood a um produto</h5>
+        </div>
+        <div class="card-body p-4">
+            <p class="text-muted small mb-3">
+                Quando um pedido chega da iFood, cada item é casado com o seu produto pelo
+                <strong>id do item na iFood</strong>. Os itens sem vínculo entram no pedido apenas com nome e preço.
+            </p>
+            <form method="post" th:action="@{/admin/ifood/vincular}" class="row g-3">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="col-md-4">
+                    <label for="ifoodItemId" class="form-label fw-semibold">Id do item na iFood</label>
+                    <input type="text" class="form-control" id="ifoodItemId" name="ifoodItemId"
+                           placeholder="Ex.: 8f4a2c..." required>
                 </div>
-                <div class="col-md-3">
-                    <label for="dataFinal" class="form-label fw-semibold">Data final</label>
-                    <input type="date" id="dataFinal" name="dataFinal" class="form-control" th:value="${dataFinal}">
+                <div class="col-md-4">
+                    <label for="ifoodItemNome" class="form-label fw-semibold">Nome na iFood (opcional)</label>
+                    <input type="text" class="form-control" id="ifoodItemNome" name="ifoodItemNome"
+                           placeholder="Ex.: Marmita P">
                 </div>
-                <div class="col-md-3">
-                    <label for="status" class="form-label fw-semibold">Status do pedido</label>
-                    <select id="status" name="status" class="form-select">
-                        <option value="TODOS" th:selected="${statusSelecionado == 'TODOS'}">Todos os status</option>
-                        <option th:each="statusItem : ${statusDisponiveis}"
-                                th:value="${statusItem.name()}"
-                                th:text="${statusItem.name()}"
-                                th:selected="${statusSelecionado == statusItem.name()}"></option>
+                <div class="col-md-4">
+                    <label for="produtoId" class="form-label fw-semibold">Produto no PDV</label>
+                    <select class="form-select" id="produtoId" name="produtoId" required>
+                        <option value="" selected disabled>Selecione...</option>
+                        <option th:each="p : ${produtos}" th:value="${p.id}" th:text="${p.nome}">Produto</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-marmita w-100">
-                        <i class="fa-solid fa-filter me-1"></i> Filtrar entregas
+                <div class="col-12">
+                    <button type="submit" class="btn btn-marmita">
+                        <i class="fa-solid fa-link me-1"></i> Vincular
                     </button>
                 </div>
-            </div>
-            <div class="small text-muted mt-3">
-                <i class="fa-solid fa-circle-info me-1"></i>
-                São exibidos pedidos com taxa de entrega igual ou superior a
-                <strong th:text="${'R$ ' + #numbers.formatDecimal(taxaMinima, 1, 2).replace('.', ',')}">R$ 5,00</strong>.
-            </div>
-        </div>
-    </form>
-
-    <div class="card card-custom mb-4 border-start border-4 border-success">
-        <div class="card-body d-flex justify-content-between align-items-center py-3">
-            <div>
-                <div class="text-muted small">Total a pagar ao motoboy</div>
-                <div class="text-muted small" th:text="${entregas.size() + ' entrega(s) no período selecionado'}">0 entrega(s) no período selecionado</div>
-            </div>
-            <strong class="fs-3 text-success" th:text="${'R$ ' + #numbers.formatDecimal(totalTaxas, 1, 2).replace('.', ',')}">R$ 0,00</strong>
+            </form>
         </div>
     </div>
 
-    <!-- PAINEL DE ENTREGAS -->
+    <!-- Vínculos existentes -->
     <div class="card card-custom">
-        <div class="card-header-custom d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-2">
-                <i class="fa-solid fa-motorcycle"></i>
-                <h5 class="card-title mb-0 fs-6 fw-bold">Pedidos com taxa de entrega</h5>
-            </div>
+        <div class="card-header-custom d-flex align-items-center gap-2">
+            <i class="fa-solid fa-list"></i>
+            <h5 class="card-title mb-0 fs-6 fw-bold">Vínculos existentes</h5>
         </div>
         <div class="card-body p-4">
-
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
+            <div th:if="${#lists.isEmpty(vinculos)}" class="text-muted">
+                Nenhum vínculo cadastrado ainda.
+            </div>
+            <div class="table-responsive" th:unless="${#lists.isEmpty(vinculos)}">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
                     <tr>
-                        <th># Pedido</th>
-                        <th>Cliente</th>
-                        <th>Endereço de Entrega</th>
-                        <th class="text-center">Data</th>
-                        <th class="text-end">Taxa</th>
-                        <th class="text-center">Status</th>
-                        <th class="text-center">Ações</th>
+                        <th>Id do item (iFood)</th>
+                        <th>Nome na iFood</th>
+                        <th>Produto no PDV</th>
+                        <th class="text-end">Ação</th>
                     </tr>
                     </thead>
                     <tbody>
-                    <tr th:each="entrega : ${entregas}">
-                        <td class="fw-bold" th:text="${'#' + entrega.id}">#102</td>
-                        <td>
-                            <div class="fw-bold" th:text="${entrega.cliente != null ? entrega.cliente.nome : 'Cliente'}">Nome</div>
-                            <small class="text-muted" th:text="${entrega.cliente != null ? entrega.cliente.celular : ''}">(11) 90000-0000</small>
+                    <tr th:each="v : ${vinculos}">
+                        <td><code th:text="${v.ifoodItemId}">id</code></td>
+                        <td th:text="${v.ifoodItemNome != null ? v.ifoodItemNome : '—'}">—</td>
+                        <td th:text="${v.produto != null ? v.produto.nome : '—'}">Produto</td>
+                        <td class="text-end">
+                            <form method="post" th:action="@{/admin/ifood/{id}/remover(id=${v.id})}" class="d-inline">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
                         </td>
-                        <td th:text="${entrega.cliente != null ? entrega.cliente.rua + ', ' + entrega.cliente.numero + ' - ' + entrega.cliente.bairro : 'Endereço não informado'}">Endereço</td>
-                        <td class="text-center" th:text="${#temporals.format(entrega.dataHoraLocal, 'dd/MM/yyyy HH:mm')}">15/09/2026 18:00</td>
-                        <td class="text-end fw-bold text-success" th:text="${'R$ ' + #numbers.formatDecimal(entrega.taxaEntrega, 1, 2).replace('.', ',')}">R$ 5,00</td>
-                        <td class="text-center">
-                            <span class="badge bg-secondary" th:text="${entrega.statusPedido}">STATUS</span>
-                        </td>
-                        <td class="text-center">
-                            <a th:if="${entrega.statusPedido != T(PDV.PDV.model.Enum.statusPedido).CONCLUIDO and entrega.statusPedido != T(PDV.PDV.model.Enum.statusPedido).CANCELADO}"
-                               th:href="@{/pedidos/entregas/concluir/{id}(id=${entrega.id})}" class="btn btn-sm btn-success" title="Concluir Entrega">
-                                <i class="fa-solid fa-check me-1"></i> Concluir
-                            </a>
-                            <span th:if="${entrega.statusPedido == T(PDV.PDV.model.Enum.statusPedido).CONCLUIDO}" class="text-success small fw-semibold">Concluída</span>
-                            <span th:if="${entrega.statusPedido == T(PDV.PDV.model.Enum.statusPedido).CANCELADO}" class="text-danger small fw-semibold">Cancelada</span>
-                        </td>
-                    </tr>
-                    <tr th:if="${#lists.isEmpty(entregas)}">
-                        <td colspan="7" class="text-center text-muted py-4">Nenhum pedido com taxa de R$ 5,00 ou mais no período e status selecionados.</td>
                     </tr>
                     </tbody>
                 </table>

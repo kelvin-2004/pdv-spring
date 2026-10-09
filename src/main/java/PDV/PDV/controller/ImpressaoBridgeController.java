@@ -34,7 +34,7 @@ public class ImpressaoBridgeController {
         List<pedido> pendentes = pedidoRepository.findPendentesImpressao();
         List<ComandaPendente> resultado = new ArrayList<>();
         for (pedido p : pendentes) {
-            String texto = impressaoService.montarTextoPedido(p.getId());
+            String texto = impressaoService.montarTextoPedido(p.getId(), true);
             ComandaPendente c = new ComandaPendente();
             c.setId(p.getId());
             c.setTextoBase64(Base64.getEncoder().encodeToString(texto.getBytes(StandardCharsets.UTF_8)));

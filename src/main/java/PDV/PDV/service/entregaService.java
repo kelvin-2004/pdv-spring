@@ -151,6 +151,20 @@ public class entregaService {
         return r;
     }
 
+    // Busca apenas o endereço (logradouro/bairro/cidade) de um CEP, sem geocodificar
+    // nem calcular taxa/distância. Usado no PDV para preencher o endereço ao editar um
+    // pedido ("recalcular endereço pelo CEP").
+    public ResultadoEntrega buscarEnderecoPorCep(String cep) throws Exception {
+        JsonNode dados = geocodificarCep(cep);
+        ResultadoEntrega r = new ResultadoEntrega();
+        r.setSucesso(true);
+        r.setCep(dados.path("cep").asText(""));
+        r.setLogradouro(dados.path("street").asText(""));
+        r.setBairro(dados.path("neighborhood").asText(""));
+        r.setCidade(dados.path("city").asText(""));
+        return r;
+    }
+
     private JsonNode geocodificarCep(String cep) throws Exception {
         String cepLimpo = cep == null ? "" : cep.replaceAll("\\D", "");
         if (cepLimpo.length() != 8) {
