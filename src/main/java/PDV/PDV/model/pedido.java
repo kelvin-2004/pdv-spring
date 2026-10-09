@@ -102,6 +102,12 @@ public class pedido {
     @Column(name = "impresso")
     private Boolean impresso = false;
 
+    // Sinaliza um pedido de reimpressão manual (botão "Imprimir" do gestor). Permite
+    // reimprimir pedidos em qualquer status (ex.: cancelado), ao contrário de "impresso"
+    // que é usado apenas no fluxo de impressão automática na chegada (status PREPARANDO).
+    @Column(name = "reimpressao")
+    private Boolean reimpressao = false;
+
     @Column(name = "pagamento_na_entrega")
     private Boolean pagamentoNaEntrega = false;
 

@@ -58,7 +58,7 @@ public interface pedidoRepository extends JpaRepository<pedido, Long> {
 
     @Modifying
     @Transactional
-    @Query("UPDATE pedido p SET p.impresso = true WHERE p.id = :id AND (p.impresso = false OR p.impresso IS NULL)")
+    @Query("UPDATE pedido p SET p.impresso = true, p.reimpressao = false WHERE p.id = :id AND (p.impresso = false OR p.impresso IS NULL OR p.reimpressao = true)")
     int marcarComoImpresso(@Param("id") Long id);
 
     @Modifying
@@ -66,10 +66,16 @@ public interface pedidoRepository extends JpaRepository<pedido, Long> {
     @Query("UPDATE pedido p SET p.impresso = false WHERE p.id = :id")
     int reverterImpressao(@Param("id") Long id);
 
+    @Modifying
+    @Transactional
+    @Query("UPDATE pedido p SET p.reimpressao = true WHERE p.id = :id")
+    int solicitarReimpressao(@Param("id") Long id);
+
     @Query("""
         SELECT p FROM pedido p
-        WHERE p.statusPedido = PDV.PDV.model.Enum.statusPedido.PREPARANDO
-          AND (p.impresso = false OR p.impresso IS NULL)
+        WHERE p.reimpressao = true
+           OR (p.statusPedido = PDV.PDV.model.Enum.statusPedido.PREPARANDO
+               AND (p.impresso = false OR p.impresso IS NULL))
         ORDER BY p.dataHoraPedido ASC
         """)
     List<pedido> findPendentesImpressao();
