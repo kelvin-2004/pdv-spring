@@ -43,3 +43,7 @@ logs/
 
 # Fotos de produto enviadas em tempo de execução
 uploads/
+
+# Configuração local do Claude Code (não versionar)
+.claude/settings.local.json
+.claude/settings.json
