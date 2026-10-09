@@ -21,7 +21,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/webhook/**", "/api/impressao/**"))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/site/**", "/css/**", "/js/**", "/img/**", "/video/**", "/uploads/**", "/webhook/**").permitAll()
+                        .requestMatchers("/", "/login", "/site/**", "/css/**", "/js/**", "/img/**", "/video/**", "/uploads/**", "/webhook/**", "/robots.txt", "/sitemap.xml").permitAll()
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults())
                 .formLogin(form -> form

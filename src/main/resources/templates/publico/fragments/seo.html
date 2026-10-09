@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+  Bloco de SEO compartilhado das páginas públicas.
+  Uso: <th:block th:replace="~{publico/fragments/seo :: head('Título', 'Descrição', '/site')}"></th:block>
+  Parâmetros: título da página, meta description e caminho canônico (ex.: '/site').
+  A URL base é a de produção (https://marmitassousa.ddns.net) — atualize aqui se o domínio mudar.
+-->
+<th:block th:fragment="head(title, description, path)">
+    <meta name="description" th:content="${description}">
+    <link rel="canonical" th:href="${'https://marmitassousa.ddns.net' + path}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Marmitas Sousa">
+    <meta property="og:locale" content="pt_BR">
+    <meta property="og:title" th:content="${title}">
+    <meta property="og:description" th:content="${description}">
+    <meta property="og:url" th:content="${'https://marmitassousa.ddns.net' + path}">
+    <meta property="og:image" content="https://marmitassousa.ddns.net/img/logo.png">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Restaurant",
+      "name": "Marmitas Sousa",
+      "image": "https://marmitassousa.ddns.net/img/logo.png",
+      "@id": "https://marmitassousa.ddns.net",
+      "url": "https://marmitassousa.ddns.net/site",
+      "telephone": "+5511961659359",
+      "priceRange": "$$",
+      "servesCuisine": ["Comida caseira", "Marmita", "Feijoada"],
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "R. Quinze, 292 - Jardim Vassouras",
+        "addressLocality": "Francisco Morato",
+        "addressRegion": "SP",
+        "postalCode": "07953-170",
+        "addressCountry": "BR"
+      },
+      "areaServed": {
+        "@type": "City",
+        "name": "Francisco Morato"
+      },
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Saturday", "Sunday"],
+          "opens": "11:30",
+          "closes": "17:00"
+        }
+      ],
+      "sameAs": [
+        "https://www.instagram.com/marmitas_sousa_morato/"
+      ]
+    }
+    </script>
+</th:block>
+</body>
+</html>
