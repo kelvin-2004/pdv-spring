@@ -51,6 +51,11 @@ public class PonteImpressao {
 
         System.out.println("Ponte iniciada. Buscando comandas em " + url + " ...");
 
+        // Se a rede oscila (WiFi caindo/retomando), o HttpClient do processo pode
+        // ficar preso em timeout para sempre — e como o processo nunca morre, o
+        // Restart=on-failure do systemd não dispara. Contamos as falhas seguidas e,
+        // no limite, encerramos com erro para o systemd reiniciar a ponte limpa.
+        int falhasConsecutivas = 0;
         while (true) {
             try {
                 List<Comanda> pendentes = buscarPendentes(http, url, auth);
@@ -61,8 +66,14 @@ public class PonteImpressao {
                     concluir(http, url, auth, c.id);
                     System.out.println("Pedido #" + c.id + " impresso e marcado como concluído.");
                 }
+                falhasConsecutivas = 0;
             } catch (Exception e) {
-                System.err.println("Erro na ponte: " + e.getMessage());
+                falhasConsecutivas++;
+                System.err.println("Erro na ponte (" + falhasConsecutivas + "/5): " + e.getMessage());
+                if (falhasConsecutivas >= 5) {
+                    System.err.println("Muitas falhas consecutivas; encerrando para o systemd reiniciar a ponte.");
+                    System.exit(1);
+                }
             }
             Thread.sleep(intervalo * 1000L);
         }
