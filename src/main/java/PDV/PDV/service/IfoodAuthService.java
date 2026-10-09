@@ -61,9 +61,10 @@ public class IfoodAuthService {
             throw new IllegalStateException("iFood não configurada (IFOOD_CLIENT_ID / IFOOD_CLIENT_SECRET ausentes).");
         }
 
-        // OAuth2 client_credentials. A iFood usa os nomes camelCase (clientId/clientSecret);
-        // enviamos também a variante snake_case por compatibilidade com versões da API.
+        // OAuth2 client_credentials. A iFood usa os nomes camelCase (clientId/clientSecret,
+        // grantType); enviamos também a variante snake_case por compatibilidade com versões da API.
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("grantType", "client_credentials");
         form.add("grant_type", "client_credentials");
         form.add("clientId", clientId);
         form.add("clientSecret", clientSecret);
