@@ -47,7 +47,12 @@ public final class WebhookSignatureUtil {
     public static boolean timestampValido(String ts, long agoraMs, long toleranciaMs) {
         try {
             long timestamp = Long.parseLong(ts);
-            return Math.abs(agoraMs - timestamp) <= toleranciaMs;
+            // O Mercado Pago envia "ts" em segundos (epoch), mas agoraMs está em milissegundos.
+            // Sem a conversão, a comparação sempre falha (diferença ~1e12), rejeitando todos os
+            // webhooks com "timestamp inválido ou fora da janela". Se o valor já vier em
+            // milissegundos (>= 1e12), usamos como está.
+            long timestampMs = timestamp < 1_000_000_000_000L ? timestamp * 1000L : timestamp;
+            return Math.abs(agoraMs - timestampMs) <= toleranciaMs;
         } catch (NumberFormatException e) {
             return false;
         }

@@ -22,6 +22,12 @@ public class MercadoPagoService {
 
     private static final String BASE_URL = "https://api.mercadopago.com";
 
+    // Mercado Pago exige exatamente 3 casas decimais (milissegundos) em date_of_expiration.
+    // ISO_OFFSET_DATE_TIME omite a fração quando ela é zero (ou trunca zeros), o que faz a API
+    // responder 400 ("must be valid date and format ..."). Este padrão sempre emite .SSS.
+    private static final DateTimeFormatter MP_DATA_EXPIRACAO =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+
     @Value("${mercado.pago.access-token:}")
     private String accessToken;
 
@@ -52,7 +58,7 @@ public class MercadoPagoService {
             body.put("notification_url", notificationUrl);
         }
         if (dataExpiracao != null) {
-            body.put("date_of_expiration", dataExpiracao.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+            body.put("date_of_expiration", dataExpiracao.format(MP_DATA_EXPIRACAO));
         }
 
         return post("/v1/payments", body);
