@@ -3,6 +3,7 @@ package PDV.PDV.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -16,14 +17,29 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
 
+    // Cadeia da ponte de impressão. A ponte (notebook da loja) autentica com HTTP Basic
+    // usando PONTE_USUARIO/PONTE_SENHA, então o Basic fica restrito AQUI e não vale para
+    // o restante do painel (que usa apenas o formulário de login). CSRF desabilitado pois
+    // é uma API chamada por um cliente Java, não pelo navegador.
     @Bean
+    @Order(1)
+    public SecurityFilterChain impressaoChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/impressao/**")
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+                .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/webhook/**", "/api/impressao/**"))
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/webhook/**"))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/login", "/site/**", "/css/**", "/js/**", "/img/**", "/video/**", "/uploads/**", "/webhook/**", "/robots.txt", "/sitemap.xml").permitAll()
                         .anyRequest().authenticated())
-                .httpBasic(Customizer.withDefaults())
                 .formLogin(form -> form
                         .loginPage("/login")
                         .defaultSuccessUrl("/pedidos", true)
