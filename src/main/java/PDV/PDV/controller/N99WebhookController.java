@@ -1,5 +1,6 @@
 package PDV.PDV.controller;
 
+import PDV.PDV.model.Enum.statusPedido;
 import PDV.PDV.model.pedido;
 import PDV.PDV.service.N99Service;
 import org.slf4j.Logger;
@@ -84,13 +85,10 @@ public class N99WebhookController {
         }
 
         Optional<pedido> novo = n99Service.aplicarPedido(order);
-        if (novo.isPresent()) {
-            String status99 = (order != null && !order.isMissingNode() && !order.isNull())
-                    ? order.path("status").asText("").toUpperCase()
-                    : "";
-            if ("CREATED".equals(status99) || "CONFIRMED".equals(status99)) {
-                n99Service.confirmarPedido(orderId);
-            }
+        // Confirma o recebimento na 99 para pedido recém-criado e ainda ativo (status
+        // numérico no formato real; usamos o status mapeado em vez de comparar texto).
+        if (novo.isPresent() && novo.get().getStatusPedido() == statusPedido.PREPARANDO) {
+            n99Service.confirmarPedido(orderId);
         }
     }
 
