@@ -8,14 +8,16 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import PDV.PDV.model.clientes;
 import PDV.PDV.model.pedido;
 import PDV.PDV.model.Enum.formaPagamento;
+import PDV.PDV.model.Enum.tipoLogistico;
 import PDV.PDV.model.Enum.tipoPedido;
 import PDV.PDV.model.itensPedido;
 import PDV.PDV.repository.pedidoRepository;
@@ -125,15 +127,32 @@ public class ImpressaoService {
             sb.append("Tipo: ").append(p.getTipoPedido() == tipoPedido.RETIRADA ? "Retirada" : "Entrega").append('\n');
         }
 
+        // Destaque para entrega feita pela própria plataforma (99/iFood): o entregador
+        // vem do aplicativo — o lojista não precisa chamar motoboy próprio.
+        if (p.getTipoLogistica() == tipoLogistico.ENTREGA_99) {
+            sb.append(destaque(centralizar("*** ENTREGA 99 (PLATAFORMA) ***"), escpos)).append('\n');
+        } else if (p.getTipoLogistica() == tipoLogistico.ENTREGA_IFOOD) {
+            sb.append(destaque(centralizar("*** ENTREGA iFOOD (PLATAFORMA) ***"), escpos)).append('\n');
+        }
+        String prazo = horaLocal(p.getDataPrazoEntrega());
+        if (prazo != null) {
+            sb.append("Entrega ate: ").append(prazo).append('\n');
+        }
+
         // ===== Cliente =====
-        if (p.getCliente() != null) {
-            clientes c = p.getCliente();
+        // Pedidos externos (iFood/99) não têm um clientes cadastrado; usam nome/telefone
+        // guardados direto do payload da plataforma.
+        String nomeCliente = p.getCliente() != null ? p.getCliente().getNome() : null;
+        String celularCliente = p.getCliente() != null ? p.getCliente().getCelular() : null;
+        if (!tem(nomeCliente)) nomeCliente = p.getClienteNomeExterno();
+        if (!tem(celularCliente)) celularCliente = p.getClienteTelefoneExterno();
+        if (tem(nomeCliente) || tem(celularCliente)) {
             sb.append(negrito(SEPARADOR_FINO, escpos)).append('\n');
-            if (tem(c.getNome())) {
-                sb.append("Cliente: ").append(c.getNome()).append('\n');
+            if (tem(nomeCliente)) {
+                sb.append("Cliente: ").append(nomeCliente).append('\n');
             }
-            if (tem(c.getCelular())) {
-                sb.append("Celular: ").append(c.getCelular()).append('\n');
+            if (tem(celularCliente)) {
+                sb.append("Celular: ").append(celularCliente).append('\n');
             }
         }
 
@@ -275,6 +294,15 @@ public class ImpressaoService {
             espacos = 1;
         }
         return rotulo + " ".repeat(espacos) + valor;
+    }
+
+    // Formata um instante (normalmente UTC) no fuso comercial de São Paulo.
+    private static String horaLocal(OffsetDateTime d) {
+        if (d == null) {
+            return null;
+        }
+        ZoneId zona = ZoneId.of("America/Sao_Paulo");
+        return d.withOffsetSameInstant(zona.getRules().getOffset(d.toInstant())).format(FMT_DATA_HORA);
     }
 
     // Envolve o texto em destaque ESC/POS (negrito + altura dupla) apenas quando a

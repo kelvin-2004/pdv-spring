@@ -191,7 +191,15 @@ public class N99Service {
         Optional<pedido> existente = pedidoRepo.findByN99PedidoId(n99PedidoId);
         if (existente.isPresent()) {
             pedido p = existente.get();
-            if (p.getStatusPedido() != statusPdv) {
+            if (p.getStatusPedido() == statusPedido.CANCELADO) {
+                return Optional.empty(); // cancelado é final
+            }
+            // Só avança o status (ou aplica um terminal). Evita regredir um pedido que o
+            // lojista já marcou como "pronto"/"a caminho" quando a 99 envia evento
+            // intermediário (cujo código numérico não mapeamos).
+            if (p.getStatusPedido() != statusPdv
+                    && (statusPdv == statusPedido.CANCELADO || statusPdv == statusPedido.CONCLUIDO
+                            || progresso(statusPdv) >= progresso(p.getStatusPedido()))) {
                 p.setStatusPedido(statusPdv);
                 if (statusPdv == statusPedido.PREPARANDO && p.getDataInicioPreparo() == null) {
                     p.setDataInicioPreparo(OffsetDateTime.now());
@@ -485,6 +493,21 @@ public class N99Service {
             return statusPedido.CONCLUIDO;
         }
         return statusPedido.PREPARANDO;
+    }
+
+    /** Progressão numérica do status no PDV, para impedir regressão ao atualizar da 99. */
+    private static int progresso(statusPedido s) {
+        if (s == null) {
+            return 0;
+        }
+        return switch (s) {
+            case AGUARDANDO_PAGAMENTO -> 15;
+            case PREPARANDO -> 40;
+            case AGUARDANDO_ENTREGADOR -> 65;
+            case A_CAMINHO -> 85;
+            case CONCLUIDO -> 100;
+            case CANCELADO -> 0;
+        };
     }
 
     private BigDecimal totalDoPedido(JsonNode order) {
