@@ -61,11 +61,12 @@ public class IfoodService {
     private final ifoodVinculoService vinculoService;
     private final configuracaoService configuracaoService;
     private final ImpressaoService impressaoService;
+    private final produtoService produtoService;
 
     public IfoodService(ObjectMapper objectMapper, IfoodAuthService authService,
                         pedidoRepository pedidoRepo, itensPedidoRepository itensRepo,
                         ifoodVinculoService vinculoService, configuracaoService configuracaoService,
-                        ImpressaoService impressaoService) {
+                        ImpressaoService impressaoService, produtoService produtoService) {
         this.objectMapper = objectMapper;
         this.authService = authService;
         this.pedidoRepo = pedidoRepo;
@@ -73,6 +74,7 @@ public class IfoodService {
         this.vinculoService = vinculoService;
         this.configuracaoService = configuracaoService;
         this.impressaoService = impressaoService;
+        this.produtoService = produtoService;
     }
 
     // ------------------------------------------------------------------
@@ -200,12 +202,18 @@ public class IfoodService {
                 itensPedido i = new itensPedido();
                 i.setPedido(salvo);
                 String itemId = item.path("id").asText(null);
+                String nomeItem = textoOuNull(item.path("name"));
+                i.setNome(nomeItem);
                 int qtd = item.path("quantity").asInt(1);
                 BigDecimal unit = decimal(item.path("unitPrice"));
                 if (unit == null) {
                     unit = decimal(item.path("price"));
                 }
                 produtos produto = itemId != null ? vinculoService.resolverProduto(itemId).orElse(null) : null;
+                // Sem vínculo explícito, tenta casar pelo nome do item com o catálogo do PDV.
+                if (produto == null) {
+                    produto = produtoService.buscarPorNomeNormalizado(nomeItem).orElse(null);
+                }
                 i.setProduto(produto);
                 i.setQuantidade(qtd);
                 i.setPrecoUnitario(unit != null ? unit : BigDecimal.ZERO);

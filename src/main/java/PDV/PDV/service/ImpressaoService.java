@@ -187,7 +187,7 @@ public class ImpressaoService {
             for (itensPedido item : p.getItens()) {
                 String nomeProduto = (item.getProduto() != null && item.getProduto().getNome() != null)
                         ? item.getProduto().getNome()
-                        : "Item";
+                        : (tem(item.getNome()) ? item.getNome() : "Item");
                 int quantidade = item.getQuantidade() != null ? item.getQuantidade() : 1;
                 BigDecimal valorUnitario = item.getPrecoUnitario() != null ? item.getPrecoUnitario() : BigDecimal.ZERO;
                 BigDecimal valorSubtotal = item.getSubtotal() != null ? item.getSubtotal() : BigDecimal.ZERO;

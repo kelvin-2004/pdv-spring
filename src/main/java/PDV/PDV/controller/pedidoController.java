@@ -556,7 +556,10 @@ public class pedidoController {
             for (itensPedido item : p.getItens()) {
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("id", item.getProduto() != null ? item.getProduto().getId() : null);
-                m.put("nome", item.getProduto() != null ? item.getProduto().getNome() : "");
+                String nome = item.getProduto() != null && item.getProduto().getNome() != null
+                        ? item.getProduto().getNome()
+                        : (item.getNome() != null ? item.getNome() : "");
+                m.put("nome", nome);
                 m.put("preco", item.getPrecoUnitario() != null ? item.getPrecoUnitario().doubleValue() : 0.0);
                 m.put("quantidade", item.getQuantidade() != null ? item.getQuantidade() : 0);
                 m.put("observacao", item.getObservacao() == null ? "" : item.getObservacao());

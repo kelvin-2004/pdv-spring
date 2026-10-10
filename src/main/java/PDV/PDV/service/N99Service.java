@@ -7,6 +7,7 @@ import PDV.PDV.model.Enum.tipoLogistico;
 import PDV.PDV.model.Enum.tipoPedido;
 import PDV.PDV.model.itensPedido;
 import PDV.PDV.model.pedido;
+import PDV.PDV.model.produtos;
 import PDV.PDV.repository.itensPedidoRepository;
 import PDV.PDV.repository.pedidoRepository;
 import org.slf4j.Logger;
@@ -62,16 +63,19 @@ public class N99Service {
     private final itensPedidoRepository itensRepo;
     private final configuracaoService configuracaoService;
     private final ImpressaoService impressaoService;
+    private final produtoService produtoService;
 
     public N99Service(ObjectMapper objectMapper, N99AuthService authService,
                       pedidoRepository pedidoRepo, itensPedidoRepository itensRepo,
-                      configuracaoService configuracaoService, ImpressaoService impressaoService) {
+                      configuracaoService configuracaoService, ImpressaoService impressaoService,
+                      produtoService produtoService) {
         this.objectMapper = objectMapper;
         this.authService = authService;
         this.pedidoRepo = pedidoRepo;
         this.itensRepo = itensRepo;
         this.configuracaoService = configuracaoService;
         this.impressaoService = impressaoService;
+        this.produtoService = produtoService;
     }
 
     // ------------------------------------------------------------------
@@ -268,7 +272,11 @@ public class N99Service {
             for (JsonNode item : arr) {
                 itensPedido i = new itensPedido();
                 i.setPedido(salvo);
-                i.setProduto(null); // sem vínculo de catálogo 99Food nesta etapa
+                String nomeItem = nomeItem(item);
+                i.setNome(nomeItem);
+                // Tenta vincular o item ao produto do PDV pelo nome; se não casar, fica sem
+                // vínculo (nome preservado no campo próprio para exibição na comanda).
+                i.setProduto(produtoService.buscarPorNomeNormalizado(nomeItem).orElse(null));
                 int qtd = item.path("quantity").asInt(item.path("count").asInt(item.path("num").asInt(1)));
                 BigDecimal unit = decimal(item.path("price"));
                 if (unit == null) {
@@ -281,7 +289,7 @@ public class N99Service {
                 i.setQuantidade(qtd);
                 i.setPrecoUnitario(preco);
                 i.setSubtotal(preco.multiply(BigDecimal.valueOf(qtd)));
-                i.setObservacao(observacaoItemComNome(item));
+                i.setObservacao(observacaoItem(item));
                 itens.add(i);
             }
         }
@@ -568,7 +576,7 @@ public class N99Service {
         return sb.length() == 0 ? null : sb.toString().trim();
     }
 
-    private String observacaoItemComNome(JsonNode item) {
+    private String nomeItem(JsonNode item) {
         String nome = textoOuNull(item.path("item_name"));
         if (nome == null) {
             nome = textoOuNull(item.path("goods_name"));
@@ -579,19 +587,18 @@ public class N99Service {
         if (nome == null) {
             nome = textoOuNull(item.path("product_name"));
         }
+        return nome;
+    }
+
+    /** Observações do item (opções/remark), sem o nome — este agora fica no campo próprio. */
+    private String observacaoItem(JsonNode item) {
         StringBuilder sb = new StringBuilder();
-        if (nome != null) {
-            sb.append(nome);
-        }
         appendObs(sb, item.path("options"));
         String obs = textoOuNull(item.path("remark"));
         if (obs == null) {
             obs = textoOuNull(item.path("note"));
         }
         if (obs != null) {
-            if (sb.length() > 0) {
-                sb.append(" | ");
-            }
             sb.append(obs);
         }
         return sb.length() == 0 ? null : sb.toString().trim();

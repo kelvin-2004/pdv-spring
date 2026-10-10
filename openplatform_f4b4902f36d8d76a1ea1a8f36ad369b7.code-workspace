@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../Downloads/openplatform_f4b4902f36d8d76a1ea1a8f36ad369b7"
+		},
+		{
+			"path": "../../Downloads/upload_06d3e5725ffb3f4d7be185f33e56b74e"
+		}
+	],
+	"settings": {
+		"java.compile.nullAnalysis.mode": "automatic",
+		"java.configuration.updateBuildConfiguration": "interactive"
+	}
+}

@@ -29,4 +29,8 @@ public class itensPedido {
     private BigDecimal precoUnitario;
     private BigDecimal subtotal;
     private String observacao;
+
+    // Nome do item como veio da plataforma (iFood/99), preservado quando não há vínculo
+    // com um produto do PDV — evita que a comanda mostre "Item" genérico.
+    private String nome;
 }
