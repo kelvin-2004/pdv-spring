@@ -232,7 +232,7 @@
                             <div class="fw-bold" th:text="${entrega.cliente != null ? entrega.cliente.nome : 'Cliente'}">Nome</div>
                             <small class="text-muted" th:text="${entrega.cliente != null ? entrega.cliente.celular : ''}">(11) 90000-0000</small>
                         </td>
-                        <td th:text="${entrega.cliente != null ? entrega.cliente.rua + ', ' + entrega.cliente.numero + ' - ' + entrega.cliente.bairro : 'Endereço não informado'}">Endereço</td>
+                        <td th:text="${entrega.enderecoEntregaResumo}">Endereço</td>
                         <td class="text-center" th:text="${#temporals.format(entrega.dataHoraLocal, 'dd/MM/yyyy HH:mm')}">15/09/2026 18:00</td>
                         <td class="text-end fw-bold text-success" th:text="${'R$ ' + #numbers.formatDecimal(entrega.taxaEntrega, 1, 2).replace('.', ',')}">R$ 5,00</td>
                         <td class="text-center">

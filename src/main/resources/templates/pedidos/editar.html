@@ -208,7 +208,7 @@
                                 <label class="form-label small text-secondary fw-semibold">CEP</label>
                                 <div class="input-group">
                                     <input class="form-control" name="cep" id="cep" inputmode="numeric" maxlength="9"
-                                           th:value="${pedido.cliente != null ? pedido.cliente.cep : ''}"
+                                           th:value="${pedido.cepEntrega}"
                                            onblur="buscarCep()">
                                     <button type="button" class="btn btn-outline-secondary" onclick="buscarCep()"
                                             title="Buscar endereço pelo CEP">
@@ -219,23 +219,23 @@
                             </div>
                             <div class="col-md-8">
                                 <label class="form-label small text-secondary fw-semibold">Rua</label>
-                                <input class="form-control" name="rua" th:value="${pedido.cliente != null ? pedido.cliente.rua : ''}">
+                                <input class="form-control" name="rua" th:value="${pedido.ruaEntrega}">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small text-secondary fw-semibold">Número</label>
-                                <input class="form-control" name="numero" th:value="${pedido.cliente != null ? pedido.cliente.numero : ''}">
+                                <input class="form-control" name="numero" th:value="${pedido.numeroEntrega}">
                             </div>
                             <div class="col-md-8">
                                 <label class="form-label small text-secondary fw-semibold">Bairro</label>
-                                <input class="form-control" name="bairro" th:value="${pedido.cliente != null ? pedido.cliente.bairro : ''}">
+                                <input class="form-control" name="bairro" th:value="${pedido.bairroEntrega}">
                             </div>
                             <div class="col-12">
                                 <label class="form-label small text-secondary fw-semibold">Complemento</label>
-                                <input class="form-control" name="complemento" th:value="${pedido.cliente != null ? pedido.cliente.complemento : ''}">
+                                <input class="form-control" name="complemento" th:value="${pedido.complementoEntrega}">
                             </div>
                             <div class="col-12">
                                 <label class="form-label small text-secondary fw-semibold">Ponto de referência</label>
-                                <input class="form-control" name="pontoReferencia" th:value="${pedido.cliente != null ? pedido.cliente.pontoReferencia : ''}">
+                                <input class="form-control" name="pontoReferencia" th:value="${pedido.referenciaEntrega}">
                             </div>
                         </div>
 

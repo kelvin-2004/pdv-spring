@@ -168,6 +168,66 @@ public class pedido {
         return "Cliente";
     }
 
+    // Endereço de entrega com fallback: entregas (digitado no checkout) -> cliente (perfil),
+    // espelhando o que o ImpressaoService monta na comanda.
+    private static boolean tem(String s) {
+        return s != null && !s.isBlank();
+    }
+
+    @Transient
+    public String getRuaEntrega() {
+        String rua = entregas != null ? entregas.getRua() : null;
+        if (!tem(rua) && cliente != null) rua = cliente.getRua();
+        return rua;
+    }
+
+    @Transient
+    public String getNumeroEntrega() {
+        String numero = entregas != null ? entregas.getNumero() : null;
+        if (!tem(numero) && cliente != null) numero = cliente.getNumero();
+        return numero;
+    }
+
+    @Transient
+    public String getBairroEntrega() {
+        String bairro = entregas != null ? entregas.getBairro() : null;
+        if (!tem(bairro) && cliente != null) bairro = cliente.getBairro();
+        return bairro;
+    }
+
+    @Transient
+    public String getCepEntrega() {
+        String cep = entregas != null ? entregas.getCep() : null;
+        if (!tem(cep) && cliente != null) cep = cliente.getCep();
+        return cep;
+    }
+
+    @Transient
+    public String getComplementoEntrega() {
+        String complemento = entregas != null ? entregas.getComplemento() : null;
+        if (!tem(complemento) && cliente != null) complemento = cliente.getComplemento();
+        return complemento;
+    }
+
+    @Transient
+    public String getReferenciaEntrega() {
+        return cliente != null ? cliente.getPontoReferencia() : null;
+    }
+
+    @Transient
+    public String getEnderecoEntregaResumo() {
+        String rua = getRuaEntrega();
+        if (!tem(rua)) {
+            return "Endereço não informado";
+        }
+        StringBuilder sb = new StringBuilder(rua);
+        String numero = getNumeroEntrega();
+        if (tem(numero)) sb.append(", ").append(numero);
+        String bairro = getBairroEntrega();
+        if (tem(bairro)) sb.append(" - ").append(bairro);
+        return sb.toString();
+    }
+
     @Transient
     public long getExpiracaoPagamentoEpochMillis() {
         if (dataExpiracaoPagamento == null) {
