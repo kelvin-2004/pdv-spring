@@ -5,6 +5,7 @@ import PDV.PDV.model.Enum.origemPedido;
 import PDV.PDV.model.Enum.statusPedido;
 import PDV.PDV.model.Enum.tipoLogistico;
 import PDV.PDV.model.Enum.tipoPedido;
+import PDV.PDV.model.entregas;
 import PDV.PDV.model.itensPedido;
 import PDV.PDV.model.pedido;
 import PDV.PDV.model.produtos;
@@ -24,6 +25,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -37,19 +39,16 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Integração com a 99Food (99Compras/Didi Food). Recebe pedidos via polling, converte
- * em {@link pedido} com origem NOVENTA_E_NOVE e reflete as mudanças de status do PDV
- * de volta para a 99.
+ * Integração com a 99Food (99Compras/Didi Food). Recebe pedidos via polling ou webhook,
+ * converte em {@link pedido} com origem NOVENTA_E_NOVE e reflete as mudanças de status do
+ * PDV de volta para a 99.
  *
- * <p>Observação sobre a API: os endpoints usam o {@code auth_token} como parâmetro
- * (query para GET, corpo para POST), e a documentação não detalha o schema de resposta
- * do pedido. Por isso este serviço é tolerante (usa {@code path()} e testa vários nomes
- * de campo) e registra o payload bruto em DEBUG, para ajustar no primeiro teste real —
- * mesmo padrão da integração iFood.</p>
- *
- * <p>Valores monetários: a doc de áreas de entrega cita "preços em centavos"; o schema
- * do pedido pode vir em centavos ou em reais. Aqui assumimos reais e deixamos o ajuste
- * para o primeiro teste real (log em DEBUG).</p>
+ * <p>Formato real da 99 (validado contra um pedido de produção em 2026-10-10): as respostas
+ * vêm num envelope {@code {"errno":0,"data":{...}}}, com o pedido dentro de {@code data}.
+ * Campos relevantes: {@code order_id} (numérico), {@code status} (numérico, 600 = concluído),
+ * {@code create_time}/{@code cancel_time}/{@code complete_time} (epoch em segundos),
+ * {@code price.*} (preços <em>em centavos</em>), {@code receive_address} (endereço do cliente),
+ * {@code order_items} (itens com {@code name}/{@code amount}/{@code sku_price}).</p>
  */
 @Service
 public class N99Service {
@@ -145,6 +144,9 @@ public class N99Service {
         if (id == null) {
             id = textoOuNull(ev.path("order").path("order_id"));
         }
+        if (id == null) {
+            id = textoOuNull(ev.path("data").path("order_id"));
+        }
         return id;
     }
 
@@ -160,7 +162,7 @@ public class N99Service {
     }
 
     public JsonNode buscarPedido(String orderId) {
-        return get("/v1/order/order/detail", "order_id", orderId);
+        return desembrulhar(get("/v1/order/order/detail", "order_id", orderId));
     }
 
     // ------------------------------------------------------------------
@@ -170,6 +172,7 @@ public class N99Service {
     /** Converte o payload de um pedido 99Food em pedido do PDV. Retorna o pedido criado (ou vazio se já existia). */
     @Transactional
     public Optional<pedido> aplicarPedido(JsonNode order) {
+        order = desembrulhar(order);
         if (order == null || order.isMissingNode() || order.isNull()) {
             return Optional.empty();
         }
@@ -179,12 +182,11 @@ public class N99Service {
             n99PedidoId = textoOuNull(order.path("id"));
         }
         if (n99PedidoId == null || n99PedidoId.isBlank()) {
-            log.warn("Pedido 99 sem order_id ignorado: {}", order.toString());
+            log.warn("Pedido 99 sem order_id ignorado: {}", order);
             return Optional.empty();
         }
 
-        String status99 = normalizarStatus(textoOuNull(order.path("status")));
-        statusPedido statusPdv = mapearStatus(status99);
+        statusPedido statusPdv = mapearStatus(order);
 
         Optional<pedido> existente = pedidoRepo.findByN99PedidoId(n99PedidoId);
         if (existente.isPresent()) {
@@ -209,20 +211,10 @@ public class N99Service {
             novo.setDataInicioPreparo(OffsetDateTime.now());
         }
 
-        // Cliente (não tem cadastro no PDV).
-        JsonNode customer = order.path("customer");
-        JsonNode receiver = order.path("receiver");
-        novo.setClienteNomeExterno(textoOuNull(receiver.path("name")) != null
-                ? textoOuNull(receiver.path("name"))
-                : textoOuNull(customer.path("name")));
-        String telefone = textoOuNull(receiver.path("phone"));
-        if (telefone == null) {
-            telefone = textoOuNull(customer.path("phone"));
-        }
-        if (telefone == null) {
-            telefone = textoOuNull(order.path("customer_phone"));
-        }
-        novo.setClienteTelefoneExterno(telefone);
+        // Cliente (nome/telefone vêm no endereço de entrega; não há cadastro no PDV).
+        JsonNode addr = order.path("receive_address");
+        novo.setClienteNomeExterno(textoOuNull(addr.path("name")));
+        novo.setClienteTelefoneExterno(textoOuNull(addr.path("phone")));
 
         boolean retirada = isRetirada(order);
         novo.setTipoPedido(retirada ? tipoPedido.RETIRADA : tipoPedido.DELIVERY);
@@ -235,33 +227,30 @@ public class N99Service {
             novo.setDataPrazoEntrega(extrairPrazoEntrega(order));
         }
 
-        BigDecimal taxa = decimal(order.path("delivery_fee"));
-        if (taxa == null) {
-            taxa = decimal(order.path("delivery_price"));
-        }
+        BigDecimal taxa = cents(order.path("price").path("delivery_price"));
         novo.setTaxaEntrega(taxa != null ? taxa : BigDecimal.ZERO);
 
-        BigDecimal total = decimal(order.path("total_price"));
-        if (total == null) {
-            total = decimal(order.path("order_amount"));
-        }
-        if (total == null) {
-            total = decimal(order.path("pay_amount"));
-        }
-        if (total == null) {
-            total = decimal(order.path("actual_total"));
-        }
-        novo.setValorTotal(total);
+        novo.setValorTotal(totalDoPedido(order));
         novo.setFormaPagamento(mapearPagamento(order));
         novo.setPago(true); // a 99 cobra na própria plataforma
         novo.setTempoPreparoMinutos(configuracaoService.obterTempoPreparoPadrao());
-
         novo.setObservacoes(montarObservacoes(order));
+
+        // Endereço de entrega em tb_entregas, para exibir no gestor e na comanda.
+        if (!retirada) {
+            entregas e = criarEntregas(order, novo);
+            if (e != null) {
+                novo.setEntregas(e);
+            }
+        }
 
         pedido salvo = pedidoRepo.save(novo);
 
         List<itensPedido> itens = new ArrayList<>();
-        JsonNode arr = order.path("items");
+        JsonNode arr = order.path("order_items");
+        if (!arr.isArray()) {
+            arr = order.path("items");
+        }
         if (!arr.isArray()) {
             arr = order.path("item_list");
         }
@@ -277,18 +266,17 @@ public class N99Service {
                 // Tenta vincular o item ao produto do PDV pelo nome; se não casar, fica sem
                 // vínculo (nome preservado no campo próprio para exibição na comanda).
                 i.setProduto(produtoService.buscarPorNomeNormalizado(nomeItem).orElse(null));
-                int qtd = item.path("quantity").asInt(item.path("count").asInt(item.path("num").asInt(1)));
-                BigDecimal unit = decimal(item.path("price"));
-                if (unit == null) {
-                    unit = decimal(item.path("unit_price"));
+                int qtd = item.path("amount").asInt(
+                        item.path("quantity").asInt(
+                                item.path("count").asInt(
+                                        item.path("num").asInt(1))));
+                if (qtd < 1) {
+                    qtd = 1;
                 }
-                if (unit == null) {
-                    unit = decimal(item.path("item_price"));
-                }
-                BigDecimal preco = unit != null ? unit : BigDecimal.ZERO;
+                BigDecimal unit = precoUnitario(item, qtd);
                 i.setQuantidade(qtd);
-                i.setPrecoUnitario(preco);
-                i.setSubtotal(preco.multiply(BigDecimal.valueOf(qtd)));
+                i.setPrecoUnitario(unit);
+                i.setSubtotal(unit.multiply(BigDecimal.valueOf(qtd)));
                 i.setObservacao(observacaoItem(item));
                 itens.add(i);
             }
@@ -450,56 +438,135 @@ public class N99Service {
     }
 
     // ------------------------------------------------------------------
-    // Mapeamentos
+    // Mapeamentos (formato real da 99)
     // ------------------------------------------------------------------
 
-    private static String normalizarStatus(String status) {
-        if (status == null) {
-            return "CREATED";
+    /** Desembrulha o envelope padrão {@code {"errno":0,"data":{...}}} se presente. */
+    private static JsonNode desembrulhar(JsonNode n) {
+        if (n == null || n.isMissingNode() || n.isNull()) {
+            return n;
         }
-        return status.toUpperCase(Locale.ROOT).replaceAll("[^A-Z]", "");
+        JsonNode data = n.path("data");
+        return data.isObject() ? data : n;
     }
 
-    private statusPedido mapearStatus(String status99) {
-        return switch (status99) {
-            case "CANCELLED", "CANCELED", "REFUNDED", "REJECTED", "CLOSED" -> statusPedido.CANCELADO;
-            case "CONCLUDED", "DELIVERED", "FINISHED" -> statusPedido.CONCLUIDO;
-            case "DISPATCHED", "DELIVERING", "ONTHEWAY", "OUTFORDELIVERY", "PICKEDUP" -> statusPedido.A_CAMINHO;
-            case "READY" -> statusPedido.AGUARDANDO_ENTREGADOR;
-            default -> statusPedido.PREPARANDO; // CREATED, CONFIRMED, PREPARING
-        };
+    /** Converte um preço em centavos (inteiro) para reais (BigDecimal com 2 casas). */
+    private static BigDecimal cents(JsonNode n) {
+        if (n == null || n.isMissingNode() || n.isNull()) {
+            return null;
+        }
+        if (n.isNumber()) {
+            return BigDecimal.valueOf(n.asLong(), 2);
+        }
+        String s = n.asText(null);
+        if (s == null || s.isBlank()) {
+            return null;
+        }
+        try {
+            return BigDecimal.valueOf(Long.parseLong(s.trim()), 2);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
-    private formaPagamento mapearPagamento(JsonNode order) {
-        for (String[] keys : new String[][] {
-                {"pay_type"}, {"payment_type"}, {"pay_method"},
-                {"payment", "type"}, {"payment", "method"} }) {
-            String v = valorEm(order, keys);
-            if (v == null) {
-                continue;
-            }
-            String up = v.toUpperCase(Locale.ROOT);
-            if (up.contains("PIX")) {
-                return formaPagamento.PIX;
-            }
-            if (up.contains("CARD") || up.contains("CARTAO") || up.contains("CREDIT") || up.contains("DEBIT")) {
-                return formaPagamento.CARTAO;
-            }
-            if (up.contains("CASH") || up.contains("DINHEIRO") || up.contains("MONEY")) {
-                return formaPagamento.DINHEIRO;
+    private statusPedido mapearStatus(JsonNode order) {
+        if (order == null || order.isMissingNode() || order.isNull()) {
+            return statusPedido.PREPARANDO;
+        }
+        // Os timestamps são o sinal mais confiável de estado (status numérico não está
+        // documentado). cancel_time > 0 = cancelado; complete_time > 0 = concluído.
+        if (order.path("cancel_time").asLong(0) > 0) {
+            return statusPedido.CANCELADO;
+        }
+        if (order.path("complete_time").asLong(0) > 0) {
+            return statusPedido.CONCLUIDO;
+        }
+        if (order.path("status").asLong(0) == 600) {
+            return statusPedido.CONCLUIDO;
+        }
+        return statusPedido.PREPARANDO;
+    }
+
+    private BigDecimal totalDoPedido(JsonNode order) {
+        BigDecimal t = cents(order.path("price").path("order_price"));
+        if (t == null) {
+            t = cents(order.path("price").path("real_price"));
+        }
+        if (t == null) {
+            t = cents(order.path("price").path("real_pay_price"));
+        }
+        if (t == null) {
+            t = cents(order.path("total_price"));
+        }
+        if (t == null) {
+            t = cents(order.path("order_amount"));
+        }
+        if (t == null) {
+            t = cents(order.path("pay_amount"));
+        }
+        return t;
+    }
+
+    private BigDecimal precoUnitario(JsonNode item, int qtd) {
+        BigDecimal unit = cents(item.path("sku_price"));
+        if (unit == null) {
+            unit = cents(item.path("real_price"));
+        }
+        if (unit == null) {
+            unit = cents(item.path("price"));
+        }
+        if (unit == null) {
+            unit = cents(item.path("unit_price"));
+        }
+        if (unit == null) {
+            unit = cents(item.path("item_price"));
+        }
+        if (unit == null) {
+            BigDecimal total = cents(item.path("total_price"));
+            if (total != null && qtd > 0) {
+                unit = total.divide(BigDecimal.valueOf(qtd), 2, RoundingMode.HALF_UP);
             }
         }
-        return formaPagamento.APP;
+        return unit != null ? unit : BigDecimal.ZERO;
+    }
+
+    private entregas criarEntregas(JsonNode order, pedido novo) {
+        JsonNode addr = order.path("receive_address");
+        if (!addr.isObject()) {
+            return null;
+        }
+        String rua = textoOuNull(addr.path("street_name"));
+        String numero = textoOuNull(addr.path("street_number"));
+        String bairro = textoOuNull(addr.path("district"));
+        String cep = textoOuNull(addr.path("postal_code"));
+        String complemento = textoOuNull(addr.path("complement"));
+        String referencia = textoOuNull(addr.path("reference"));
+        if (complemento == null) {
+            complemento = referencia;
+        } else if (referencia != null && !referencia.equalsIgnoreCase(complemento)) {
+            complemento = complemento + " - " + referencia;
+        }
+
+        if (rua == null && numero == null && bairro == null && cep == null && complemento == null) {
+            return null;
+        }
+        entregas e = new entregas();
+        e.setPedido(novo);
+        e.setRua(rua);
+        e.setNumero(numero);
+        e.setBairro(bairro);
+        e.setCep(cep);
+        e.setComplemento(complemento);
+        return e;
     }
 
     private boolean isRetirada(JsonNode order) {
-        String tipo = primeiroTexto(order, "delivery_type", "deliver_type", "order_type");
-        if (tipo != null) {
-            String t = tipo.toUpperCase(Locale.ROOT);
-            return t.contains("PICKUP") || t.contains("TAKEOUT")
-                    || t.contains("RETIRADA") || t.contains("SELF_PICKUP");
-        }
-        return !temEndereco(order);
+        JsonNode addr = order.path("receive_address");
+        boolean temEndereco = addr.isObject()
+                && (textoOuNull(addr.path("street_name")) != null
+                        || textoOuNull(addr.path("street_number")) != null
+                        || textoOuNull(addr.path("poi_address")) != null);
+        return !temEndereco;
     }
 
     private boolean isSelfDelivery(JsonNode order) {
@@ -517,13 +584,9 @@ public class N99Service {
         return false;
     }
 
-    private boolean temEndereco(JsonNode order) {
-        return order.hasNonNull("receiver_address") || order.hasNonNull("delivery_address")
-                || order.hasNonNull("receiver") || order.hasNonNull("address");
-    }
-
     private OffsetDateTime extrairPrazoEntrega(JsonNode order) {
         String[][] candidatos = {
+                {"expected_arrived_eta"}, {"expected_cook_eta"},
                 {"expected_delivery_time"}, {"promise_delivery_time"}, {"promise_time"},
                 {"delivery_time"}, {"expected_time"}, {"latest_ready_time"},
                 {"delivery", "expected_time"}, {"delivery", "eta"}, {"promise", "delivery_time"},
@@ -553,8 +616,8 @@ public class N99Service {
     }
 
     private String extrairReferencia(JsonNode order) {
-        String[] candidatos = {"order_no", "order_number", "display_id", "short_id",
-                "serial_number", "order_sequence"};
+        String[] candidatos = {"order_index", "order_no", "order_number", "display_id",
+                "short_id", "serial_number", "order_sequence"};
         for (String k : candidatos) {
             String v = textoOuNull(order.path(k));
             if (v != null) {
@@ -569,10 +632,6 @@ public class N99Service {
         appendObs(sb, order.path("remark"));
         appendObs(sb, order.path("note"));
         appendObs(sb, order.path("customer_note"));
-        String endereco = extrairEndereco(order);
-        if (endereco != null) {
-            sb.append(endereco).append(" | ");
-        }
         return sb.length() == 0 ? null : sb.toString().trim();
     }
 
@@ -590,57 +649,56 @@ public class N99Service {
         return nome;
     }
 
-    /** Observações do item (opções/remark), sem o nome — este agora fica no campo próprio. */
+    /** Observações do item (opções/sub_itens e remark), sem o nome. */
     private String observacaoItem(JsonNode item) {
         StringBuilder sb = new StringBuilder();
-        appendObs(sb, item.path("options"));
-        String obs = textoOuNull(item.path("remark"));
-        if (obs == null) {
-            obs = textoOuNull(item.path("note"));
-        }
+        appendObs(sb, item.path("remark"));
+        String obs = textoOuNull(item.path("note"));
         if (obs != null) {
             sb.append(obs);
+        }
+        JsonNode subs = item.path("sub_item_list");
+        if (subs.isArray()) {
+            for (JsonNode s : subs) {
+                String n = textoOuNull(s.path("name"));
+                if (n == null) {
+                    n = textoOuNull(s.path("item_name"));
+                }
+                if (n == null) {
+                    n = textoOuNull(s.path("goods_name"));
+                }
+                if (n != null) {
+                    if (sb.length() > 0) {
+                        sb.append(" | ");
+                    }
+                    int q = s.path("amount").asInt(s.path("quantity").asInt(1));
+                    sb.append(q > 1 ? q + "x " + n : n);
+                }
+            }
         }
         return sb.length() == 0 ? null : sb.toString().trim();
     }
 
-    private String extrairEndereco(JsonNode order) {
-        JsonNode addr = order.path("receiver_address");
-        if (addr.isMissingNode() || addr.isNull()) {
-            addr = order.path("delivery_address");
-        }
-        if (addr.isMissingNode() || addr.isNull()) {
-            addr = order.path("receiver");
-        }
-        if (addr.isMissingNode() || addr.isNull()) {
-            return null;
-        }
-        String rua = textoOuNull(addr.path("address"));
-        if (rua == null) {
-            rua = textoOuNull(addr.path("street"));
-        }
-        if (rua == null) {
-            rua = textoOuNull(addr.path("detail_address"));
-        }
-        String bairro = textoOuNull(addr.path("district"));
-        String cidade = textoOuNull(addr.path("city"));
-        StringBuilder sb = new StringBuilder();
-        if (rua != null) {
-            sb.append(rua);
-        }
-        if (bairro != null) {
-            if (sb.length() > 0) {
-                sb.append(" - ");
+    private formaPagamento mapearPagamento(JsonNode order) {
+        for (String[] keys : new String[][] {
+                {"pay_type"}, {"payment_type"}, {"pay_method"},
+                {"payment", "type"}, {"payment", "method"} }) {
+            String v = valorEm(order, keys);
+            if (v == null) {
+                continue;
             }
-            sb.append(bairro);
-        }
-        if (cidade != null) {
-            if (sb.length() > 0) {
-                sb.append(", ");
+            String up = v.toUpperCase(Locale.ROOT);
+            if (up.contains("PIX")) {
+                return formaPagamento.PIX;
             }
-            sb.append(cidade);
+            if (up.contains("CARD") || up.contains("CARTAO") || up.contains("CREDIT") || up.contains("DEBIT")) {
+                return formaPagamento.CARTAO;
+            }
+            if (up.contains("CASH") || up.contains("DINHEIRO") || up.contains("MONEY")) {
+                return formaPagamento.DINHEIRO;
+            }
         }
-        return sb.length() == 0 ? null : "Entrega: " + sb;
+        return formaPagamento.APP;
     }
 
     // ------------------------------------------------------------------
@@ -692,24 +750,6 @@ public class N99Service {
         }
         String s = n.asText(null);
         return (s == null || s.isBlank()) ? null : s.trim();
-    }
-
-    private static BigDecimal decimal(JsonNode n) {
-        if (n == null || n.isMissingNode() || n.isNull()) {
-            return null;
-        }
-        if (n.isNumber()) {
-            return n.decimalValue();
-        }
-        String s = n.asText(null);
-        if (s == null || s.isBlank()) {
-            return null;
-        }
-        try {
-            return new BigDecimal(s);
-        } catch (NumberFormatException e) {
-            return null;
-        }
     }
 
     /** Aceita timestamp em epoch (segundos ou ms) ou string ISO. */

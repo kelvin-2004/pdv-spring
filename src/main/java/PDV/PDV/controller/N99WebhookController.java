@@ -123,8 +123,9 @@ public class N99WebhookController {
         if (n == null || n.isMissingNode() || n.isNull() || !n.isObject()) {
             return false;
         }
-        return n.has("items") || n.has("item_list") || n.has("goods_list")
+        return n.has("order_items") || n.has("items") || n.has("item_list") || n.has("goods_list")
+                || n.has("price") || n.has("receive_address") || n.has("receiver")
                 || n.has("total_price") || n.has("order_amount") || n.has("pay_amount")
-                || n.has("actual_total") || n.has("customer") || n.has("receiver");
+                || n.has("actual_total") || n.has("customer") || n.has("create_time");
     }
 }
